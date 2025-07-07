@@ -27,19 +27,13 @@ export const Navbar = () => {
   const top = useTransform(scrollY, [0, 80], [20, 0]); // <- top navbar
   const height = useTransform(scrollY, [0, 80], [80, 64]);
 
-  const logoLeft = useTransform(scrollY, [0, 80], [80, 40]);
+  const logoLeft = useTransform(scrollY, [0, 80], [100, 60]);
   const logoTop = useTransform(scrollY, [0, 80], [30, 5]);
   const logoScale = useTransform(scrollY, [0, 80], [1.4, 1]);
   const logoZ = useTransform(scrollY, [0, 80], [120, 101]);
 
-  const menuRight = useTransform(scrollY, [0, 80], [150, 90]);
+  const menuRight = useTransform(scrollY, [0, 80], [60, 40]);
   const subNavbarTop = useTransform([height, top], ([h, t]) => h + t); // 64 is the height of the Navbar
-
-  // convert motion value `top` -> number for SubNavbar
-  const [navbarTopValue, setNavbarTopValue] = useState(0);
-  useEffect(() => {
-    return top.on("change", (val) => setNavbarTopValue(val));
-  }, [top]);
 
   useEffect(() => {
     if (anchorRef) {
@@ -71,6 +65,7 @@ export const Navbar = () => {
 
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => setShowSub(false), 200);
+    setActiveCategory(null);
   };
 
   const handleMouseEnter = () => {
@@ -127,7 +122,7 @@ export const Navbar = () => {
             height,
             display: "flex",
             alignItems: "center",
-            padding: "0 32px",
+            padding: "0",
             pointerEvents: "auto",
             zIndex: 2,
           }}
@@ -139,9 +134,10 @@ export const Navbar = () => {
               }}
               className="flex items-center gap-4"
             >
-              <SepNavbarItem>Giới thiệu</SepNavbarItem>
+              <SepNavbarItem className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
               {category.map((cat) => (
                 <SepNavbarItem
+                  className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
                   key={cat.id}
                   innerRef={(el) => {
                     if (cat.id === activeCategory?.id) setAnchorRef(el);
@@ -154,7 +150,7 @@ export const Navbar = () => {
                   {cat.name}
                 </SepNavbarItem>
               ))}
-              <SepNavbarItem isLast>Liên hệ</SepNavbarItem>
+              <SepNavbarItem className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
             </motion.div>
           </div>
         </motion.div>
@@ -162,6 +158,9 @@ export const Navbar = () => {
         {/* SubNavbar nằm dưới Navbar */}
         {showSub && activeCategory?.child?.length > 0 && (
           <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
             style={{
               position: "fixed",
               top: subNavbarTop,
