@@ -1,5 +1,5 @@
 import { categoryServices } from "@/services/category";
-import { motion, useScroll, useTransform, useMotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import SepNavbarItem from "./sepItem";
 import { SubNavbar } from "./subNavbar";
@@ -14,31 +14,53 @@ export const Navbar = () => {
   const [subWidth, setSubWidth] = useState(0);
   const [anchorRef, setAnchorRef] = useState < HTMLElement | null > (null);
 
-
   const { scrollY } = useScroll();
+  const smoothScroll = useSpring(scrollY, { stiffness: 200, damping: 30 });
+  const progress = useTransform(smoothScroll, [0, 48], [0, 1]); // clamp trong khoảng 0–80px
 
-  const borderRadius = useTransform(scrollY, [0, 60], [40, 0]);
-  const bg = useTransform(scrollY, [0, 80], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
-  const boxShadow = useTransform(scrollY, [0, 80], [
+  // const borderRadius = useTransform(scrollY, [0, 60], [40, 0]);
+  // const bg = useTransform(scrollY, [0, 80], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
+  // const boxShadow = useTransform(scrollY, [0, 80], [
+  //   "0 8px 32px rgba(0,0,0,0.12)",
+  //   "0 2px 12px rgba(0, 0, 0, 0.199)",
+  // ]);
+  // const left = useTransform(scrollY, [0, 80], [650, 0]);
+  // const top = useTransform(scrollY, [0, 80], [20, 0]); // <- top navbar
+  // const height = useTransform(scrollY, [0, 80], [80, 64]);
+
+  // const logoLeft = useTransform(scrollY, [0, 80], [100, 60]);
+  // const logoTop = useTransform(scrollY, [0, 80], [30, 5]);
+  // const logoScale = useTransform(scrollY, [0, 80], [1.4, 1]);
+  // const logoZ = useTransform(scrollY, [0, 80], [120, 101]);
+
+  // const menuRight = useTransform(scrollY, [0, 80], [60, 40]);
+  // const subNavbarTop = useTransform([height, top], ([h, t]) => h + t); // 64 is the height of the Navbar
+
+
+  const borderRadius = useTransform(progress, [0, 1], [40, 0]);
+  const bg = useTransform(progress, [0, 1], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
+  const boxShadow = useTransform(progress, [0, 1], [
     "0 8px 32px rgba(0,0,0,0.12)",
     "0 2px 12px rgba(0, 0, 0, 0.199)",
   ]);
-  const left = useTransform(scrollY, [0, 80], [650, 0]);
-  const top = useTransform(scrollY, [0, 80], [20, 0]); // <- top navbar
-  const height = useTransform(scrollY, [0, 80], [80, 64]);
+  const left = useTransform(progress, [0, 1], [650, 0]);
+  const top = useTransform(progress, [0, 1], [20, 0]);
+  const height = useTransform(progress, [0, 1], [80, 64]);
 
-  const logoLeft = useTransform(scrollY, [0, 80], [100, 60]);
-  const logoTop = useTransform(scrollY, [0, 80], [30, 5]);
-  const logoScale = useTransform(scrollY, [0, 80], [1.4, 1]);
-  const logoZ = useTransform(scrollY, [0, 80], [120, 101]);
+  const logoLeft = useTransform(progress, [0, 1], [100, 60]);
+  const logoTop = useTransform(progress, [0, 1], [30, 5]);
+  const logoScale = useTransform(progress, [0, 1], [1.4, 1]);
+  const logoZ = useTransform(progress, [0, 1], [120, 101]);
 
-  const menuRight = useTransform(scrollY, [0, 80], [60, 40]);
-  const subNavbarTop = useTransform([height, top], ([h, t]) => h + t); // 64 is the height of the Navbar
+  const menuRight = useTransform(progress, [0, 1], [160, 40]);
+  const flexGrow = useTransform(progress, [0, 1], [0, 1]);
+  const subNavbarTop = useTransform([height, top], ([h, t]) => h + t);
+
 
   useEffect(() => {
     if (anchorRef) {
       const rect = anchorRef.getBoundingClientRect();
-      const left = rect.left;
+      const left = rect.left - 100;
       const maxWidth = window.innerWidth - left;
 
       setSubLeft(left);
@@ -134,10 +156,10 @@ export const Navbar = () => {
               }}
               className="flex items-center gap-4"
             >
-              <SepNavbarItem className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
               {category.map((cat) => (
                 <SepNavbarItem
-                  className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
+                  className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
                   key={cat.id}
                   innerRef={(el) => {
                     if (cat.id === activeCategory?.id) setAnchorRef(el);
@@ -150,7 +172,7 @@ export const Navbar = () => {
                   {cat.name}
                 </SepNavbarItem>
               ))}
-              <SepNavbarItem className="text-lg px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
             </motion.div>
           </div>
         </motion.div>

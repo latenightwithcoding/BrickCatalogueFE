@@ -4,19 +4,21 @@ const SepNavbarItem = ({
     isLast = false,
     onMouseEnter,
     onMouseLeave,
-    innerRef, // <- thêm dòng này
+    innerRef,
 }) => {
     return (
         <div
-            className="flex items-center gap-4"
+            ref={innerRef}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
-            ref={innerRef} // <- gắn ref vào div này
+            className="flex items-center"
         >
             <div className={`cursor-pointer ${className}`}>
                 {children}
             </div>
-            {!isLast && <div className="mx-2 text-gray-400">•</div>}
+            {!isLast && (
+                <div className="ml-2 text-gray-400 text-lg select-none">•</div>
+            )}
         </div>
     );
 };
