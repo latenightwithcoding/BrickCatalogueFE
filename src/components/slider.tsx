@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 
-export const Slider = ({ images }) => {
+interface SliderProps {
+    images: string[];
+}
+
+export const Slider = ({ images }: SliderProps) => {
     const [current, setCurrent] = useState(0);
     const timerRef = useRef < NodeJS.Timeout | null > (null);
 
@@ -43,13 +47,13 @@ export const Slider = ({ images }) => {
             {/* Navigation buttons */}
             <button
                 onClick={goPrev}
-                className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
+                className="flex items-center text-3xl absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
             >
                 &#8592;
             </button>
             <button
                 onClick={goNext}
-                className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
+                className="flex items-center text-3xl absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
             >
                 &#8594;
             </button>

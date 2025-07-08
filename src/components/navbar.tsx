@@ -60,7 +60,7 @@ export const Navbar = () => {
   useEffect(() => {
     if (anchorRef) {
       const rect = anchorRef.getBoundingClientRect();
-      const left = rect.left - 100;
+      const left = rect.left - 65;
       const maxWidth = window.innerWidth - left;
 
       setSubLeft(left);
@@ -114,7 +114,9 @@ export const Navbar = () => {
             height: 48,
           }}
         >
-          <p className="text-3xl">Xuân Hương</p>
+          <span className="font-gilroy font-bold text-4xl text-[#628BBF] text-shadow">
+            Xuân Hương
+          </span>
         </motion.div>
 
         {/* Nền */}
@@ -156,10 +158,10 @@ export const Navbar = () => {
               }}
               className="flex items-center gap-4"
             >
-              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
               {category.map((cat) => (
                 <SepNavbarItem
-                  className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
+                  className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
                   key={cat.id}
                   innerRef={(el) => {
                     if (cat.id === activeCategory?.id) setAnchorRef(el);
@@ -168,11 +170,12 @@ export const Navbar = () => {
                     setActiveCategory(cat);
                     handleMouseEnter();
                   }}
+                  href={`/category/${cat.id}`}
                 >
                   {cat.name}
                 </SepNavbarItem>
               ))}
-              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-blue-500 text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
             </motion.div>
           </div>
         </motion.div>

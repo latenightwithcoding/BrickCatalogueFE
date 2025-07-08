@@ -1,3 +1,5 @@
+import { Link } from "@heroui/link";
+
 const SepNavbarItem = ({
     children,
     className = '',
@@ -5,6 +7,7 @@ const SepNavbarItem = ({
     onMouseEnter,
     onMouseLeave,
     innerRef,
+    href = '#',
 }) => {
     return (
         <div
@@ -13,9 +16,9 @@ const SepNavbarItem = ({
             onMouseLeave={onMouseLeave}
             className="flex items-center"
         >
-            <div className={`cursor-pointer ${className}`}>
+            <Link href={href} className={`cursor-pointer ${className}`}>
                 {children}
-            </div>
+            </Link>
             {!isLast && (
                 <div className="ml-2 text-gray-400 text-lg select-none">•</div>
             )}

@@ -12,6 +12,7 @@ export const SubNavbar = ({ category }) => {
                         key={cat?.id || index}
                         className={itemClass}
                         isLast={index === category.length - 1}
+                        href={`/category/${cat.id}`}
                     >
                         {cat.name}
                     </SepNavbarItem>
