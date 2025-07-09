@@ -1,17 +1,23 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FaArrowLeft, FaArrowRight, FaLongArrowAltLeft, FaLongArrowAltRight } from "react-icons/fa";
 
 interface SliderProps {
     images: string[];
+    onSlideChange?: (index: number) => void;
 }
 
-export const Slider = ({ images }: SliderProps) => {
+export const Slider = ({ images, onSlideChange }: SliderProps) => {
     const [current, setCurrent] = useState(0);
     const timerRef = useRef < NodeJS.Timeout | null > (null);
 
     const startAutoSlide = () => {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
-            setCurrent((prev) => (prev + 1) % images.length);
+            setCurrent((prev) => {
+                const next = (prev + 1) % images.length;
+                onSlideChange?.(next); // 🔁 Gọi callback mỗi lần auto slide
+                return next;
+            });
         }, 7000);
     };
 
@@ -23,13 +29,21 @@ export const Slider = ({ images }: SliderProps) => {
     }, [images.length]);
 
     const goPrev = () => {
-        setCurrent((prev) => (prev - 1 + images.length) % images.length);
-        startAutoSlide(); // reset thời gian
+        setCurrent((prev) => {
+            const next = (prev - 1 + images.length) % images.length;
+            onSlideChange?.(next); // 🔁 Gọi callback khi click nút
+            return next;
+        });
+        startAutoSlide();
     };
 
     const goNext = () => {
-        setCurrent((prev) => (prev + 1) % images.length);
-        startAutoSlide(); // reset thời gian
+        setCurrent((prev) => {
+            const next = (prev + 1) % images.length;
+            onSlideChange?.(next); // 🔁 Gọi callback khi click nút
+            return next;
+        });
+        startAutoSlide();
     };
 
     return (
@@ -47,15 +61,17 @@ export const Slider = ({ images }: SliderProps) => {
             {/* Navigation buttons */}
             <button
                 onClick={goPrev}
-                className="flex items-center text-3xl absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
+                className="!w-16 !h-16 flex items-center justify-center text-3xl absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-20 text-white px-3 py-2 rounded-full hover:bg-opacity-70 transition z-20"
             >
-                &#8592;
+                {/* &#8592; */}
+                <FaArrowLeft />
             </button>
             <button
                 onClick={goNext}
-                className="flex items-center text-3xl absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-2 rounded-full hover:bg-opacity-80 transition z-20"
+                className="!w-16 !h-16 flex items-center justify-center text-3xl absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-20 text-white px-3 py-2 rounded-full hover:bg-opacity-70 transition z-20"
             >
-                &#8594;
+                {/* &#8594; */}
+                <FaArrowRight />
             </button>
         </div>
     );

@@ -47,9 +47,9 @@ export const Navbar = () => {
   const top = useTransform(progress, [0, 1], [20, 0]);
   const height = useTransform(progress, [0, 1], [80, 64]);
 
-  const logoLeft = useTransform(progress, [0, 1], [100, 60]);
+  const logoLeft = useTransform(progress, [0, 1], [130, 60]);
   const logoTop = useTransform(progress, [0, 1], [30, 5]);
-  const logoScale = useTransform(progress, [0, 1], [1.4, 1]);
+  const logoScale = useTransform(progress, [0, 1], [1.8, 1]);
   const logoZ = useTransform(progress, [0, 1], [120, 101]);
 
   const menuRight = useTransform(progress, [0, 1], [160, 40]);
@@ -114,7 +114,10 @@ export const Navbar = () => {
             height: 48,
           }}
         >
-          <span className="font-gilroy font-bold text-4xl text-[#628BBF] text-shadow">
+          {/* 🔆 Đốm sáng mờ ở nền logo */}
+          <div className="absolute w-[450px] h-[150px] bg-white opacity-55 blur-[70px] rounded-full -z-10" />
+          {/* 🔤 Chữ logo */}
+          <span className="font-gilroy font-bold text-4xl text-[#527aaf] relative z-10">
             Xuân Hương
           </span>
         </motion.div>
@@ -158,10 +161,10 @@ export const Navbar = () => {
               }}
               className="flex items-center gap-4"
             >
-              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">Giới thiệu</SepNavbarItem>
               {category.map((cat) => (
                 <SepNavbarItem
-                  className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
+                  className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
                   key={cat.id}
                   innerRef={(el) => {
                     if (cat.id === activeCategory?.id) setAnchorRef(el);
@@ -175,7 +178,7 @@ export const Navbar = () => {
                   {cat.name}
                 </SepNavbarItem>
               ))}
-              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#628BBF] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
+              <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" isLast>Liên hệ</SepNavbarItem>
             </motion.div>
           </div>
         </motion.div>
