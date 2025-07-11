@@ -11,8 +11,10 @@ import { useEffect, useRef, useState } from "react";
 import Lenis from "@studio-freight/lenis";
 import { Slider } from "@/components/slider";
 import {
-  motion
+  motion, useScroll, useMotionValueEvent,
+  useSpring
 } from "framer-motion";
+import { useScrollTrigger } from "../components/scrollTrigger";
 
 const getAverageColor = (img: HTMLImageElement): Promise<{ r: number; g: number; b: number }> => {
   return new Promise((resolve) => {
@@ -73,8 +75,16 @@ const analyzeImages = async (urls: string[]) => {
 export default function IndexPage() {
   const scrollRef = useRef(null);
   const titleText = "XUÂN HƯƠNG - HỆ SINH THÁI VẬT LIỆU XANH, ĐỒNG BỘ CHO MỌI CÔNG TRÌNH";
+  const brandText = "THƯƠNG HIỆU";
+  const brandingText = "XUÂN HƯƠNG";
   const words = titleText.split(" ");
-  const image = ["https://media.discordapp.net/attachments/1305489841928142889/1392069335484203049/b3ede70738648e3ad775.jpg?ex=686e3118&is=686cdf98&hm=72a76d2889052e88281cd6873a118f134e4fffad57faddfa3f09a1fc0b7db8e9&=&format=webp", "https://media.discordapp.net/attachments/1305489841928142889/1392069335803105350/cf3b9cd143b2f5ecaca3.jpg?ex=686e3119&is=686cdf99&hm=cc215c2d07f49b16e8e99ff4f04ee70dfa769bf2d91bc6486c6a667e921e340a&=&format=webp", "https://media.discordapp.net/attachments/1305489841928142889/1392069336117674044/4f4a39a1e6c2509c09d3.jpg?ex=686e3119&is=686cdf99&hm=9ac33fb8af5d91d3a8b6cad7fbfb5fe9c5a65f3fccb36ac61561a8ff928eb7e9&=&format=webp", "https://media.discordapp.net/attachments/1305489841928142889/1392409999048704020/858bb9c294615c07c379587bb8a8fdb53a51e678-1440x810.png?ex=686f6e5d&is=686e1cdd&hm=5bb014d99f8ce739924d334d88804c877fa8d130cf906ee93777d800c8efbb5e&=&format=webp&quality=lossless"]
+  const brandWords = brandText.split(" ");
+  const brandingWords = brandingText.split(" ");
+  const image = ["/images/1.jpg", "/images/2.jpg", "/images/3.jpg"];
+  const { ref: brandRef, show: brandShow } = useScrollTrigger(0.3);
+  const { ref: brandingRef, show: brandingShow } = useScrollTrigger(0.3, true);
+  const { ref: brandingRef_1, show: brandingShow_1 } = useScrollTrigger(0.3, true);
+  const { ref: introductionRef, show: introductionShow } = useScrollTrigger(0.3);
 
   const [slides, setSlides] = useState < { url: string; textColor: "text-white" | "text-[#527aaf]" }[] > ([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -147,182 +157,160 @@ export default function IndexPage() {
 
         </section>
 
+        <section
+          ref={brandRef}
+          className="flex items-center justify-center gap-4 py-8 md:py-10"
+        >
+          {brandWords.map((word, index) => (
+            <motion.span
+              key={index}
+              className={`font-gilroy font-extrabold text-8xl text-[#CEDBEB]`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={brandShow ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: index * 0.2, duration: 0.4 }}
+            >
+              {word}
+            </motion.span>
+          ))}
+        </section>
+        <section className="relative w-full overflow-hidden mt-6">
+          {/* Vùng nền bo cong bên trái */}
+          <div className="absolute inset-0 flex justify-start">
+            <div className="w-[60%] h-full rounded-r-[500px] bg-gradient-to-b from-[#d3e3ed] to-[#d3e3ed00] " />
+          </div>
 
-        <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-          <div className="inline-block max-w-lg text-center justify-center">
-            <span className={title()}>Make&nbsp;</span>
-            <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-            <br />
-            <span className={title()}>
-              websites regardless of your design experience.
-            </span>
-            <div className={subtitle({ class: "mt-4" })}>
-              Beautiful, fast and modern React UI library.
+          {/* Nội dung nằm bên trong vùng xanh */}
+          <div ref={brandingRef} className="relative z-10 w-[60%] pl-52 pr-36 py-8 md:py-10 text-center">
+            <motion.div
+              initial="hidden"
+              animate={brandingShow ? "visible" : "hidden"}
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: {
+                    staggerChildren: 0.2,
+                  },
+                },
+              }}
+              className="mb-4"
+            >
+              {brandingWords.map((word, index) => (
+                <motion.span
+                  key={index}
+                  className="text-4xl md:text-5xl font-extrabold text-[#0f5b96] mr-4 inline-block"
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </motion.div>
+
+            <h3 className="text-lg md:text-xl font-bold mt-4">NÂNG TẦM PHONG CÁCH SỐNG</h3>
+            <p className="mt-4 text-gray-700 leading-relaxed">
+              Với hơn 50 năm kinh nghiệm, <strong>Xuân Hương</strong> tự hào là người sáng lập nên ngành công nghiệp sản
+              xuất vật liệu xây dựng tại Việt Nam. Bằng việc tiên phong trong sản xuất các dòng sản phẩm
+              gạch ốp lát cao cấp, <strong>Xuân Hương</strong> đã góp phần nâng tầm phong cách sống cho các dự án, công trình.
+            </p>
+            <div className="flex items-center justify-center">
+              <button className="w-fit mt-8 px-6 py-3 border border-[#0f5b96] rounded-full text-[#0f5b96] font-bold hover:bg-[#0f5b96] hover:text-white transition flex items-center gap-2">
+                XEM THÊM
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Link
-              isExternal
-              className={buttonStyles({
-                color: "primary",
-                radius: "full",
-                variant: "shadow",
-              })}
-              href={siteConfig.links.docs}
-            >
-              Documentation
-            </Link>
-            <Link
-              isExternal
-              className={buttonStyles({ variant: "bordered", radius: "full" })}
-              href={siteConfig.links.github}
-            >
-              <GithubIcon size={20} />
-              GitHub
-            </Link>
-          </div>
-
-          <div className="mt-8">
-            <Snippet hideCopyButton hideSymbol variant="bordered">
-              <span>
-                Get started by editing{" "}
-                <Code color="primary">pages/index.tsx</Code>
-              </span>
-            </Snippet>
           </div>
         </section>
-        <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-          <div className="inline-block max-w-lg text-center justify-center">
-            <span className={title()}>Make&nbsp;</span>
-            <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-            <br />
-            <span className={title()}>
-              websites regardless of your design experience.
-            </span>
-            <div className={subtitle({ class: "mt-4" })}>
-              Beautiful, fast and modern React UI library.
+
+        <section className="relative w-full overflow-hidden mt-6">
+          {/* Vùng nền bo cong bên trái */}
+          <div className="absolute inset-0 flex justify-end">
+            <div className="w-[60%] h-full rounded-l-[500px] bg-gradient-to-b from-[#d3e3ed] to-[#d3e3ed00] " />
+          </div>
+
+          {/* Nội dung nằm bên trong vùng xanh (bên phải) */}
+          <div ref={brandingRef_1} className="relative z-10 w-[60%] ml-auto pr-52 pl-36 py-20 text-center">
+            <motion.div
+              initial="hidden"
+              animate={brandingShow_1 ? "visible" : "hidden"}
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: {
+                    staggerChildren: 0.2,
+                  },
+                },
+              }}
+              className="mb-4"
+            >
+              {brandingWords.map((word, index) => (
+                <motion.span
+                  key={index}
+                  className="text-4xl md:text-5xl font-extrabold text-[#0f5b96] mr-4 inline-block"
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </motion.div>
+            <h3 className="text-lg md:text-xl font-bold mt-4">NÂNG TẦM PHONG CÁCH SỐNG</h3>
+            <p className="mt-4 text-gray-700 leading-relaxed">
+              Với hơn 50 năm kinh nghiệm, <strong>Xuân Hương</strong> tự hào là người sáng lập nên ngành công nghiệp sản
+              xuất vật liệu xây dựng tại Việt Nam. Bằng việc tiên phong trong sản xuất các dòng sản phẩm
+              gạch ốp lát cao cấp, <strong>Xuân Hương</strong> đã góp phần nâng tầm phong cách sống cho các dự án, công trình.
+            </p>
+
+            <div className="flex items-center justify-center">
+              <button className="w-fit mt-8 px-6 py-3 border border-[#0f5b96] rounded-full text-[#0f5b96] font-bold hover:bg-[#0f5b96] hover:text-white transition flex items-center gap-2">
+                XEM THÊM
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Link
-              isExternal
-              className={buttonStyles({
-                color: "primary",
-                radius: "full",
-                variant: "shadow",
-              })}
-              href={siteConfig.links.docs}
-            >
-              Documentation
-            </Link>
-            <Link
-              isExternal
-              className={buttonStyles({ variant: "bordered", radius: "full" })}
-              href={siteConfig.links.github}
-            >
-              <GithubIcon size={20} />
-              GitHub
-            </Link>
-          </div>
-
-          <div className="mt-8">
-            <Snippet hideCopyButton hideSymbol variant="bordered">
-              <span>
-                Get started by editing{" "}
-                <Code color="primary">pages/index.tsx</Code>
-              </span>
-            </Snippet>
-          </div>
         </section>
-        <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-          <div className="inline-block max-w-lg text-center justify-center">
-            <span className={title()}>Make&nbsp;</span>
-            <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-            <br />
-            <span className={title()}>
-              websites regardless of your design experience.
-            </span>
-            <div className={subtitle({ class: "mt-4" })}>
-              Beautiful, fast and modern React UI library.
-            </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Link
-              isExternal
-              className={buttonStyles({
-                color: "primary",
-                radius: "full",
-                variant: "shadow",
-              })}
-              href={siteConfig.links.docs}
-            >
-              Documentation
-            </Link>
-            <Link
-              isExternal
-              className={buttonStyles({ variant: "bordered", radius: "full" })}
-              href={siteConfig.links.github}
-            >
-              <GithubIcon size={20} />
-              GitHub
-            </Link>
-          </div>
 
-          <div className="mt-8">
-            <Snippet hideCopyButton hideSymbol variant="bordered">
-              <span>
-                Get started by editing{" "}
-                <Code color="primary">pages/index.tsx</Code>
-              </span>
-            </Snippet>
-          </div>
+        <section className="flex flex-col items-start px-20 py-8 md:py-10 leading-none">
+          <p className="text-9xl font-gilroy font-extrabold text-transparent stroke-text">
+            Xuân
+          </p>
+          <p className="-mt-4 text-[150px] font-gilroy font-extrabold text-white stroke-text">
+            Hương
+          </p>
         </section>
-        <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-          <div className="inline-block max-w-lg text-center justify-center">
-            <span className={title()}>Make&nbsp;</span>
-            <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-            <br />
-            <span className={title()}>
-              websites regardless of your design experience.
-            </span>
-            <div className={subtitle({ class: "mt-4" })}>
-              Beautiful, fast and modern React UI library.
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Link
-              isExternal
-              className={buttonStyles({
-                color: "primary",
-                radius: "full",
-                variant: "shadow",
-              })}
-              href={siteConfig.links.docs}
-            >
-              Documentation
-            </Link>
-            <Link
-              isExternal
-              className={buttonStyles({ variant: "bordered", radius: "full" })}
-              href={siteConfig.links.github}
-            >
-              <GithubIcon size={20} />
-              GitHub
-            </Link>
-          </div>
-
-          <div className="mt-8">
-            <Snippet hideCopyButton hideSymbol variant="bordered">
-              <span>
-                Get started by editing{" "}
-                <Code color="primary">pages/index.tsx</Code>
-              </span>
-            </Snippet>
-          </div>
+        <section ref={introductionRef} className="flex flex-col items-center justify-center px-20 gap-4">
+          <motion.p
+            className={`font-gilroy text-lg text-black`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={introductionShow ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            Lorem ipsum dolor sit amet. Sit recusandae error et ratione galisum est fuga laborum sit voluptatem eius qui autem perferendis aut deleniti nostrum rem expedita Quis. Sed cumque repudiandae hic cupiditate ipsa aut consequatur esse vel harum autem. Aut sunt suscipit ea consequatur architecto aut atque commodi est quos minima. Qui quasi voluptates id ipsam enim qui molestiae error. Aut fuga nihil et doloremque inventore id aliquid magni qui totam repellat. Eos molestiae ratione et itaque sint ab animi enim et dolorem dicta et esse voluptatem ea eveniet quae eos soluta omnis. Eos quia perspiciatis ut cupiditate officia ut enim molestiae sed illum nihil ut ipsum blanditiis est quia numquam est omnis galisum. Aut perferendis officia ea deserunt culpa id cumque accusantium eos omnis natus sed expedita fuga quo culpa voluptate? Quo ratione tempore aut assumenda praesentium est quis ipsam ut deserunt recusandae ex labore odio.
+          </motion.p>
         </section>
       </div>
     </DefaultLayout>

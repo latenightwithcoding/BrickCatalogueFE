@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.stroke-text {
+    -webkit-text-stroke: 1.5px #0f5b96;
+    /* Màu viền và độ dày */
+    color: transparent;
+    /* Ẩn màu chữ */
+}

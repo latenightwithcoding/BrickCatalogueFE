@@ -117,7 +117,7 @@ export const Navbar = () => {
           {/* 🔆 Đốm sáng mờ ở nền logo */}
           <div className="absolute w-[450px] h-[150px] bg-white opacity-55 blur-[70px] rounded-full -z-10" />
           {/* 🔤 Chữ logo */}
-          <span className="font-gilroy font-bold text-4xl text-[#527aaf] relative z-10">
+          <span className="font-gilroy font-extrabold text-4xl text-[#527aaf] relative z-10">
             Xuân Hương
           </span>
         </motion.div>
