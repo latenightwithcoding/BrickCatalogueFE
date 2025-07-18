@@ -27,6 +27,7 @@
     "@studio-freight/lenis": "^1.0.42",
     "axios": "^1.10.0",
     "clsx": "2.1.1",
+    "formik": "^2.4.6",
     "framer-motion": "11.15.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
