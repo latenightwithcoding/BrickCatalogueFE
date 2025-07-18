@@ -74,7 +74,7 @@ const analyzeImages = async (urls: string[]) => {
 
 export default function IndexPage() {
   const scrollRef = useRef(null);
-  const titleText = "XUÂN HƯƠNG - HỆ SINH THÁI VẬT LIỆU XANH, ĐỒNG BỘ CHO MỌI CÔNG TRÌNH";
+  const titleText = "XUÂN HƯƠNG - NÂNG TẦM KHÔNG GIAN SỐNG CỦA BẠN";
   const brandText = "THƯƠNG HIỆU";
   const brandingText = "XUÂN HƯƠNG";
   const words = titleText.split(" ");
@@ -85,6 +85,11 @@ export default function IndexPage() {
   const { ref: brandingRef, show: brandingShow } = useScrollTrigger(0.3, true);
   const { ref: brandingRef_1, show: brandingShow_1 } = useScrollTrigger(0.3, true);
   const { ref: introductionRef, show: introductionShow } = useScrollTrigger(0.3);
+  const [fontScale, setFontScale] = useState(1);
+  const [initialX, setInitialX] = useState(300);
+  const [isStatic, setIsStatic] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isWrap, setIsWrap] = useState(false);
 
   const [slides, setSlides] = useState < { url: string; textColor: "text-white" | "text-[#527aaf]" }[] > ([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -112,6 +117,38 @@ export default function IndexPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const ratio = window.devicePixelRatio;
+      const width = window.innerWidth;
+
+      setIsStatic(width < 1530);
+      setIsMobile(width < 1220);
+
+      // Tính toán tỉ lệ scale cho chữ
+      let scale = 1;
+
+      if (ratio > 1) {
+        // Nếu độ phân giải cao + màn hình nhỏ thì scale nhỏ hơn
+        if (width < 1440) {
+          scale = 0.85;
+          setIsWrap(true);
+        } else if (width < 1600) {
+          scale = 0.9;
+        } else {
+          scale = 0.95;
+        }
+      }
+      console.log("Font scale:", scale);
+
+      setFontScale(scale);
+    };
+
+    handleResize(); // ✅ Kiểm tra ban đầu
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <DefaultLayout>
       <div ref={scrollRef}>
@@ -132,11 +169,24 @@ export default function IndexPage() {
                 initial="hidden"
                 animate="visible"
                 variants={{
-                  visible: { transition: { staggerChildren: 0.07 } }, // delay giữa các chữ
+                  visible: { transition: { staggerChildren: 0.07 } },
                 }}
-                className="absolute left-48 h-fit bottom-14 z-10 line-clamp-2"
+                className="absolute bottom-14 z-10 py-4 left-1/2 text-center"
+                style={{
+                  transform: `translateX(-50%) scale(${fontScale})`,
+                  transformOrigin: "center",
+                  maxWidth: isWrap ? "90vw" : "none", // giúp ngắt dòng nếu cần
+                }}
               >
-                <p className={`font-gilroy font-bold text-shadow text-5xl ${slides[currentIndex]?.textColor} flex flex-wrap gap-x-4`}>
+                <p
+                  className={`
+    font-gilroy font-bold text-shadow text-[clamp(1.5rem,4vw,3.5rem)]
+    ${slides[currentIndex]?.textColor}
+    flex ${isWrap ? "flex-wrap" : ""}
+    justify-center text-center gap-x-3
+    ${isWrap ? "max-h-[10.5em] overflow-hidden" : "whitespace-nowrap"}
+  `}
+                >
                   {words.map((word, index) => (
                     <motion.span
                       key={index}
@@ -145,12 +195,18 @@ export default function IndexPage() {
                         visible: { opacity: 1 },
                       }}
                       transition={{ duration: 0.4 }}
+                      className="inline-block"
                     >
                       {word}
                     </motion.span>
                   ))}
                 </p>
+
               </motion.div>
+
+
+
+
 
             </>
           )}
@@ -180,7 +236,7 @@ export default function IndexPage() {
           </div>
 
           {/* Nội dung nằm bên trong vùng xanh */}
-          <div ref={brandingRef} className="relative z-10 w-[60%] pl-52 pr-36 py-8 md:py-10 text-center">
+          <div ref={brandingRef} className="relative z-10 w-[60%] pl-48 pr-36 py-8 md:py-10 text-center">
             <motion.div
               initial="hidden"
               animate={brandingShow ? "visible" : "hidden"}
@@ -209,11 +265,9 @@ export default function IndexPage() {
               ))}
             </motion.div>
 
-            <h3 className="text-lg md:text-xl font-bold mt-4">NÂNG TẦM PHONG CÁCH SỐNG</h3>
+            <h3 className="text-lg md:text-xl font-bold mt-4">NÂNG TẦM KHÔNG GIAN SỐNG CỦA BẠN</h3>
             <p className="mt-4 text-gray-700 leading-relaxed">
-              Với hơn 50 năm kinh nghiệm, <strong>Xuân Hương</strong> tự hào là người sáng lập nên ngành công nghiệp sản
-              xuất vật liệu xây dựng tại Việt Nam. Bằng việc tiên phong trong sản xuất các dòng sản phẩm
-              gạch ốp lát cao cấp, <strong>Xuân Hương</strong> đã góp phần nâng tầm phong cách sống cho các dự án, công trình.
+              Với hành trình hơn hai thập kỷ hình thành và phát triển kể từ năm 2003, VLXD <strong>Xuân Hương</strong> đã trở thành người bạn đồng hành đáng tin cậy của hàng ngàn công trình lớn nhỏ. Chúng tôi không chỉ bán vật liệu xây dựng, chúng tôi mang đến những mảnh ghép hoàn hảo để hoàn thiện vẻ đẹp cho ngôi nhà của bạn. Chúng tôi hiểu rằng mỗi công trình là một tác phẩm nghệ thuật, và vẻ đẹp của nó được tạo nên từ những vật liệu chất lượng nhất.
             </p>
             <div className="flex items-center justify-center">
               <button className="w-fit mt-8 px-6 py-3 border border-[#0f5b96] rounded-full text-[#0f5b96] font-bold hover:bg-[#0f5b96] hover:text-white transition flex items-center gap-2">
@@ -268,12 +322,15 @@ export default function IndexPage() {
                 </motion.span>
               ))}
             </motion.div>
-            <h3 className="text-lg md:text-xl font-bold mt-4">NÂNG TẦM PHONG CÁCH SỐNG</h3>
+            <h3 className="text-lg md:text-xl font-bold mt-4">THẾ MẠNH</h3>
             <p className="mt-4 text-gray-700 leading-relaxed">
-              Với hơn 50 năm kinh nghiệm, <strong>Xuân Hương</strong> tự hào là người sáng lập nên ngành công nghiệp sản
-              xuất vật liệu xây dựng tại Việt Nam. Bằng việc tiên phong trong sản xuất các dòng sản phẩm
-              gạch ốp lát cao cấp, <strong>Xuân Hương</strong> đã góp phần nâng tầm phong cách sống cho các dự án, công trình.
+              Thế mạnh của chúng tôi là các sản phẩm trang trí nội ngoại thất tinh tế và đa dạng:
             </p>
+            <ul className="list-disc list-inside mt-4 pl-16 text-left">
+              <li>Gạch & Đá: Mang đến sự sang trọng và cá tính.</li>
+              <li>Ngói & Sỏi: Tạo nên điểm nhấn độc đáo và hài hòa với thiên nhiên.</li>
+              <li>Keo dán & chống thấm: Đem lại sự vững chắc an toàn theo thời gian</li>
+            </ul>
 
             <div className="flex items-center justify-center">
               <button className="w-fit mt-8 px-6 py-3 border border-[#0f5b96] rounded-full text-[#0f5b96] font-bold hover:bg-[#0f5b96] hover:text-white transition flex items-center gap-2">
@@ -309,7 +366,8 @@ export default function IndexPage() {
             animate={introductionShow ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.4 }}
           >
-            Lorem ipsum dolor sit amet. Sit recusandae error et ratione galisum est fuga laborum sit voluptatem eius qui autem perferendis aut deleniti nostrum rem expedita Quis. Sed cumque repudiandae hic cupiditate ipsa aut consequatur esse vel harum autem. Aut sunt suscipit ea consequatur architecto aut atque commodi est quos minima. Qui quasi voluptates id ipsam enim qui molestiae error. Aut fuga nihil et doloremque inventore id aliquid magni qui totam repellat. Eos molestiae ratione et itaque sint ab animi enim et dolorem dicta et esse voluptatem ea eveniet quae eos soluta omnis. Eos quia perspiciatis ut cupiditate officia ut enim molestiae sed illum nihil ut ipsum blanditiis est quia numquam est omnis galisum. Aut perferendis officia ea deserunt culpa id cumque accusantium eos omnis natus sed expedita fuga quo culpa voluptate? Quo ratione tempore aut assumenda praesentium est quis ipsam ut deserunt recusandae ex labore odio.
+            {/* Lorem ipsum dolor sit amet. Sit recusandae error et ratione galisum est fuga laborum sit voluptatem eius qui autem perferendis aut deleniti nostrum rem expedita Quis. Sed cumque repudiandae hic cupiditate ipsa aut consequatur esse vel harum autem. Aut sunt suscipit ea consequatur architecto aut atque commodi est quos minima. Qui quasi voluptates id ipsam enim qui molestiae error. Aut fuga nihil et doloremque inventore id aliquid magni qui totam repellat. Eos molestiae ratione et itaque sint ab animi enim et dolorem dicta et esse voluptatem ea eveniet quae eos soluta omnis. Eos quia perspiciatis ut cupiditate officia ut enim molestiae sed illum nihil ut ipsum blanditiis est quia numquam est omnis galisum. Aut perferendis officia ea deserunt culpa id cumque accusantium eos omnis natus sed expedita fuga quo culpa voluptate? Quo ratione tempore aut assumenda praesentium est quis ipsam ut deserunt recusandae ex labore odio. */}
+            Với phương châm "Lấy uy tín tạo nên thương hiệu", chúng tôi cam kết mang đến cho Quý khách hàng những sản phẩm vượt trội cùng dịch vụ tư vấn chuyên nghiệp, tận tâm, góp phần kiến tạo nên những không gian sống đẳng cấp và bền vững cùng thời gian.
           </motion.p>
         </section>
       </div>

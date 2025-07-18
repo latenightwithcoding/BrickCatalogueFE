@@ -62,14 +62,13 @@ export const Navbar = () => {
       const width = window.innerWidth;
       const ratio = window.devicePixelRatio;
 
-      if (ratio === 2 && width >= 1530 && width <= 1920) {
-        // Nội suy tuyến tính từ 300 đến 650
+      if (width >= 1530 && width <= 1920) {
         const min = 1530;
         const max = 1920;
         const minX = 300;
         const maxX = 650;
 
-        const t = (width - min) / (max - min); // t từ 0 đến 1
+        const t = (width - min) / (max - min);
         return minX + t * (maxX - minX);
       }
 
