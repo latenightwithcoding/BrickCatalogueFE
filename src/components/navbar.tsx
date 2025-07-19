@@ -65,15 +65,15 @@ export const Navbar = () => {
       if (width >= 1530 && width <= 1920) {
         const min = 1530;
         const max = 1920;
-        const minX = 300;
-        const maxX = 650;
+        const minX = 150;
+        const maxX = 500;
 
         const t = (width - min) / (max - min);
         return minX + t * (maxX - minX);
       }
 
-      if (ratio > 1 || (width < 1530 && ratio === 2)) return 300;
-      return 650;
+      if (ratio > 1 || (width < 1530 && ratio === 2)) return 150;
+      return 500;
     };
 
     handleResize(); // ✅ Kiểm tra ban đầu

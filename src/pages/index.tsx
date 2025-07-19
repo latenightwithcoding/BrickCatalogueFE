@@ -75,12 +75,14 @@ const analyzeImages = async (urls: string[]) => {
 export default function IndexPage() {
   const scrollRef = useRef(null);
   const titleText = "XUÂN HƯƠNG - NÂNG TẦM KHÔNG GIAN SỐNG CỦA BẠN";
+  const subtitleText = "NHẬN THI CÔNG SẮT";
   const brandText = "THƯƠNG HIỆU";
   const brandingText = "XUÂN HƯƠNG";
   const words = titleText.split(" ");
+  const subtitleWords = subtitleText.split(" ");
   const brandWords = brandText.split(" ");
   const brandingWords = brandingText.split(" ");
-  const image = ["/images/1.jpg", "/images/2.jpg", "/images/3.jpg"];
+  const image = ["/images/1.jpg", "/images/2.jpg", "/images/3.jpg", "/images/4.jpg", "/images/5.jpg", "/images/6.jpg", "/images/7.jpg", "/images/8.jpg"];
   const { ref: brandRef, show: brandShow } = useScrollTrigger(0.3);
   const { ref: brandingRef, show: brandingShow } = useScrollTrigger(0.3, true);
   const { ref: brandingRef_1, show: brandingShow_1 } = useScrollTrigger(0.3, true);
@@ -171,6 +173,44 @@ export default function IndexPage() {
                 variants={{
                   visible: { transition: { staggerChildren: 0.07 } },
                 }}
+                className="absolute top-1/3 z-10 py-4 left-1/2 text-center"
+                style={{
+                  transform: `translateX(-50%) scale(${fontScale})`,
+                  transformOrigin: "center",
+                  maxWidth: isWrap ? "90vw" : "none", // giúp ngắt dòng nếu cần
+                }}
+              >
+                <p
+                  className={`
+                    font-gilroy font-bold text-shadow text-[clamp(1.5rem,4vw,3.5rem)]
+                    ${slides[currentIndex]?.textColor}
+                    flex ${isWrap ? "flex-wrap" : ""}
+                    justify-center text-center gap-x-3
+                    ${isWrap ? "max-h-[10.5em] overflow-hidden" : "whitespace-nowrap"}
+                  `}
+                >
+                  {subtitleWords.map((word, index) => (
+                    <motion.span
+                      key={index}
+                      variants={{
+                        hidden: { opacity: 0 },
+                        visible: { opacity: 1 },
+                      }}
+                      transition={{ duration: 0.4 }}
+                      className="inline-block"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </p>
+
+              </motion.div>
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.07 } },
+                }}
                 className="absolute bottom-14 z-10 py-4 left-1/2 text-center"
                 style={{
                   transform: `translateX(-50%) scale(${fontScale})`,
@@ -180,12 +220,12 @@ export default function IndexPage() {
               >
                 <p
                   className={`
-    font-gilroy font-bold text-shadow text-[clamp(1.5rem,4vw,3.5rem)]
-    ${slides[currentIndex]?.textColor}
-    flex ${isWrap ? "flex-wrap" : ""}
-    justify-center text-center gap-x-3
-    ${isWrap ? "max-h-[10.5em] overflow-hidden" : "whitespace-nowrap"}
-  `}
+                    font-gilroy font-bold text-shadow text-[clamp(1.5rem,4vw,3.5rem)]
+                    ${slides[currentIndex]?.textColor}
+                    flex ${isWrap ? "flex-wrap" : ""}
+                    justify-center text-center gap-x-3
+                    ${isWrap ? "max-h-[10.5em] overflow-hidden" : "whitespace-nowrap"}
+                  `}
                 >
                   {words.map((word, index) => (
                     <motion.span
@@ -203,11 +243,6 @@ export default function IndexPage() {
                 </p>
 
               </motion.div>
-
-
-
-
-
             </>
           )}
 
