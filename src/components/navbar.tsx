@@ -20,6 +20,7 @@ export const Navbar = () => {
   const smoothScroll = useSpring(scrollY, { stiffness: 200, damping: 30 });
   const progress = useTransform(smoothScroll, [0, 48], [0, 1]); // clamp trong khoảng 0–80px
 
+
   // const borderRadius = useTransform(scrollY, [0, 60], [40, 0]);
   // const bg = useTransform(scrollY, [0, 80], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
   // const boxShadow = useTransform(scrollY, [0, 80], [
@@ -46,43 +47,83 @@ export const Navbar = () => {
     "0 2px 12px rgba(0, 0, 0, 0.199)",
   ]);
 
-  const [initialX, setInitialX] = useState(650); // mặc định
+  const initialX = useMotionValue(650); // mặc định
+
+  const getSmartCalculatedX = (needShift = false) => {
+    const offset = 40;
+    const menuShift = 120;
+
+    // Nếu DOM đã sẵn sàng, dùng boundingRect để lấy chính xác vị trí
+    if (firstItemRef.current) {
+      const rect = firstItemRef.current.getBoundingClientRect();
+      const shift = needShift ? menuShift : 0;
+      const result = rect.left - offset - shift;
+      console.log(
+        "📐 Using DOM: rect.left =", rect.left,
+        "| offset =", offset,
+        "| shift =", shift,
+        "| result =", result
+      );
+      return result;
+    }
+
+    // Nếu chưa có DOM → dùng responsive logic fallback
+    console.warn("⚠️ Fallback to responsive estimation (no DOM)");
+
+    const width = window.innerWidth;
+    const ratio = window.devicePixelRatio;
+
+    if (width >= 1530 && width <= 1920) {
+      const min = 1530;
+      const max = 1920;
+      const minX = 150;
+      const maxX = 500;
+      const t = (width - min) / (max - min);
+      return minX + t * (maxX - minX);
+    }
+
+    if (ratio > 1 || (width < 1530 && ratio === 2)) return 150;
+    return 500;
+  };
+
+
 
   useEffect(() => {
     const handleResize = () => {
-      const x = getResponsiveX();
-      console.log("window.innerWidth:", window.innerWidth);
-      console.log("devicePixelRatio:", window.devicePixelRatio); // ✅ Log kiểm tra
-      setInitialX(x);
-      setIsStatic(window.innerWidth < 1530); // Cập nhật trạng thái isStatic
-      setIsMobile(window.innerWidth < 1220); // Cập nhật trạng thái isMobile
-    };
+      let x = 0;
 
-    const getResponsiveX = () => {
-      const width = window.innerWidth;
-      const ratio = window.devicePixelRatio;
-
-      if (width >= 1530 && width <= 1920) {
-        const min = 1530;
-        const max = 1920;
-        const minX = 150;
-        const maxX = 500;
-
-        const t = (width - min) / (max - min);
-        return minX + t * (maxX - minX);
+      if (scrollY.get() > 0) {
+        x = getSmartCalculatedX(true);
+      } else {
+        x = getSmartCalculatedX();
       }
 
-      if (ratio > 1 || (width < 1530 && ratio === 2)) return 150;
-      return 500;
+      let forceStatic = false;
+
+      if (logoRef.current) {
+        const logoRight = logoRef.current.getBoundingClientRect().right;
+        const margin = 16;
+
+        if (x < logoRight + margin) {
+          forceStatic = true;
+        }
+      }
+
+      console.log("Resize detected, initialX:", x);
+      console.log("forceStatic:", forceStatic);
+
+      initialX.set(x);
+      setIsStatic(forceStatic);
+      setIsMobile(window.innerWidth < 1220);
     };
 
-    handleResize(); // ✅ Kiểm tra ban đầu
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [category, scrollY]);
 
 
-  const left = useTransform(progress, [0, 1], [initialX, 0]);
+  const left = useTransform(progress, [0, 1], [initialX.get(), 0]);
   const top = useTransform(progress, [0, 1], [20, 0]);
   const height = useTransform(progress, [0, 1], [80, 64]);
 
@@ -96,6 +137,8 @@ export const Navbar = () => {
   const subNavbarTop = useTransform([height, top], ([h, t]) => h + t);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeMobileParent, setActiveMobileParent] = useState < number | null > (null);
+  const firstItemRef = useRef < HTMLElement | null > (null);
+  const logoRef = useRef < HTMLDivElement | null > (null);
 
 
 
@@ -144,6 +187,7 @@ export const Navbar = () => {
         {/* Logo */}
         {!isStatic ? (
           <motion.div
+            ref={logoRef}
             style={{
               position: "absolute",
               left: logoLeft,
@@ -344,7 +388,11 @@ export const Navbar = () => {
                 }}
                 className="flex items-center gap-4"
               >
-                <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition">
+                <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" innerRef={(el) => {
+                  if (el && !firstItemRef.current) {
+                    firstItemRef.current = el;
+                  }
+                }}>
                   Giới thiệu
                 </SepNavbarItem>
                 {category.map((cat) => (

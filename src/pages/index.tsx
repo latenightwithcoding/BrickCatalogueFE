@@ -86,7 +86,7 @@ export default function IndexPage() {
   const { ref: brandRef, show: brandShow } = useScrollTrigger(0.3);
   const { ref: brandingRef, show: brandingShow } = useScrollTrigger(0.3, true);
   const { ref: brandingRef_1, show: brandingShow_1 } = useScrollTrigger(0.3, true);
-  const { ref: introductionRef, show: introductionShow } = useScrollTrigger(0.3);
+  const { ref: introductionRef, show: introductionShow } = useScrollTrigger(0.15);
   const [fontScale, setFontScale] = useState(1);
   const [initialX, setInitialX] = useState(300);
   const [isStatic, setIsStatic] = useState(false);
@@ -129,17 +129,15 @@ export default function IndexPage() {
 
       // Tính toán tỉ lệ scale cho chữ
       let scale = 1;
+      // Nếu độ phân giải cao + màn hình nhỏ thì scale nhỏ hơn
 
-      if (ratio > 1) {
-        // Nếu độ phân giải cao + màn hình nhỏ thì scale nhỏ hơn
-        if (width < 1440) {
-          scale = 0.85;
-          setIsWrap(true);
-        } else if (width < 1600) {
-          scale = 0.9;
-        } else {
-          scale = 0.95;
-        }
+      if (width < 1440) {
+        scale = 0.85;
+        setIsWrap(true);
+      } else if (width < 1600) {
+        scale = 0.9;
+      } else {
+        scale = 0.95;
       }
       console.log("Font scale:", scale);
 
@@ -394,7 +392,7 @@ export default function IndexPage() {
             Hương
           </p>
         </section>
-        <section ref={introductionRef} className="flex flex-col items-center justify-center px-20 gap-4">
+        <section ref={introductionRef} className="flex flex-col items-start justify-center px-20 gap-4">
           <motion.p
             className={`font-gilroy text-lg text-black`}
             initial={{ opacity: 0, y: 20 }}
