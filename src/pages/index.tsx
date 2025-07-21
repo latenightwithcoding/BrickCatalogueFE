@@ -209,11 +209,10 @@ export default function IndexPage() {
                 variants={{
                   visible: { transition: { staggerChildren: 0.07 } },
                 }}
-                className="absolute bottom-14 z-10 py-4 left-1/2 text-center"
+                className="absolute bottom-14 z-10 py-4 left-1/2 text-center w-screen"
                 style={{
                   transform: `translateX(-50%) scale(${fontScale})`,
                   transformOrigin: "center",
-                  maxWidth: isWrap ? "90vw" : "none", // giúp ngắt dòng nếu cần
                 }}
               >
                 <p
@@ -253,7 +252,7 @@ export default function IndexPage() {
           {brandWords.map((word, index) => (
             <motion.span
               key={index}
-              className={`font-gilroy font-extrabold text-8xl text-[#CEDBEB]`}
+              className={`font-gilroy font-extrabold ${window.innerWidth <= 425 ? "text-4xl" : "text-8xl"} text-[#CEDBEB]`}
               initial={{ opacity: 0, y: 20 }}
               animate={brandShow ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: index * 0.2, duration: 0.4 }}
@@ -265,11 +264,11 @@ export default function IndexPage() {
         <section className="relative w-full overflow-hidden mt-6">
           {/* Vùng nền bo cong bên trái */}
           <div className="absolute inset-0 flex justify-start">
-            <div className="w-[60%] h-full rounded-r-[500px] bg-gradient-to-b from-[#d3e3ed] to-[#d3e3ed00] " />
+            <div className={`h-full ${isMobile ? "rounded-r-[100px] w-[80%]" : "rounded-r-[500px] w-[60%]"} bg-gradient-to-b from-[#d3e3ed] to-[#d3e3ed00]`} />
           </div>
 
           {/* Nội dung nằm bên trong vùng xanh */}
-          <div ref={brandingRef} className="relative z-10 w-[60%] pl-48 pr-36 py-8 md:py-10 text-center">
+          <div ref={brandingRef} className={`relative z-10 ${isMobile ? "pl-12 pr-2 w-[70%]" : "pl-48 pr-36 w-[60%]"} py-8 md:py-10 text-center`}>
             <motion.div
               initial="hidden"
               animate={brandingShow ? "visible" : "hidden"}
@@ -323,11 +322,11 @@ export default function IndexPage() {
         <section className="relative w-full overflow-hidden mt-6">
           {/* Vùng nền bo cong bên trái */}
           <div className="absolute inset-0 flex justify-end">
-            <div className="w-[60%] h-full rounded-l-[500px] bg-gradient-to-b from-[#d3e3ed] to-[#d3e3ed00] " />
+            <div className={`h-full bg-gradient-to-b ${isMobile ? "rounded-l-[100px] w-[80%]" : "rounded-l-[500px] w-[60%]"} from-[#d3e3ed] to-[#d3e3ed00]`} />
           </div>
 
           {/* Nội dung nằm bên trong vùng xanh (bên phải) */}
-          <div ref={brandingRef_1} className="relative z-10 w-[60%] ml-auto pr-52 pl-36 py-20 text-center">
+          <div ref={brandingRef_1} className={`relative z-10 ml-auto ${isMobile ? "pr-10 pl-2 w-[70%]" : "pr-52 pl-36 w-[60%]"} py-20 text-center`}>
             <motion.div
               initial="hidden"
               animate={brandingShow_1 ? "visible" : "hidden"}
@@ -359,7 +358,7 @@ export default function IndexPage() {
             <p className="mt-4 text-gray-700 leading-relaxed">
               Thế mạnh của chúng tôi là các sản phẩm trang trí nội ngoại thất tinh tế và đa dạng:
             </p>
-            <ul className="list-disc list-inside mt-4 pl-16 text-left">
+            <ul className={`list-disc list-inside mt-4 ${isMobile ? "pl-6" : "pl-16"} text-left`}>
               <li>Gạch & Đá: Mang đến sự sang trọng và cá tính.</li>
               <li>Ngói & Sỏi: Tạo nên điểm nhấn độc đáo và hài hòa với thiên nhiên.</li>
               <li>Keo dán & chống thấm: Đem lại sự vững chắc an toàn theo thời gian</li>
@@ -384,15 +383,15 @@ export default function IndexPage() {
         </section>
 
 
-        <section className="flex flex-col items-start px-20 py-8 md:py-10 leading-none">
-          <p className="text-9xl font-gilroy font-extrabold text-transparent stroke-text">
+        <section className={`flex flex-col items-start ${isMobile ? "px-4" : "px-20"} py-8 md:py-10 leading-none`}>
+          <p className={`${isMobile ? "text-7xl" : "text-9xl"} font-gilroy font-extrabold text-transparent stroke-text`}>
             Xuân
           </p>
-          <p className="-mt-4 text-[150px] font-gilroy font-extrabold text-white stroke-text">
+          <p className={`-mt-4 ${isMobile ? "text-[80px]" : "text-[150px]"} font-gilroy font-extrabold text-white stroke-text`}>
             Hương
           </p>
         </section>
-        <section ref={introductionRef} className="flex flex-col items-start justify-center px-20 gap-4">
+        <section ref={introductionRef} className={`flex flex-col items-start justify-center ${isMobile ? "px-4" : "px-20"} gap-4`}>
           <motion.p
             className={`font-gilroy text-lg text-black`}
             initial={{ opacity: 0, y: 20 }}
@@ -404,6 +403,6 @@ export default function IndexPage() {
           </motion.p>
         </section>
       </div>
-    </DefaultLayout>
+    </DefaultLayout >
   );
 }

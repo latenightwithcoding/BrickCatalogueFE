@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring } from "fram
 import { useEffect, useRef, useState } from "react";
 import SepNavbarItem from "./sepItem";
 import { SubNavbar } from "./subNavbar";
+import { debounce } from "lodash";
 
 export const Navbar = () => {
   const ref = useRef(null);
@@ -47,80 +48,109 @@ export const Navbar = () => {
     "0 2px 12px rgba(0, 0, 0, 0.199)",
   ]);
 
-  const initialX = useMotionValue(650); // mặc định
+  const initialX = useMotionValue(1000); // mặc định
 
-  const getSmartCalculatedX = (needShift = false) => {
-    const offset = 40;
-    const menuShift = 120;
-
-    // Nếu DOM đã sẵn sàng, dùng boundingRect để lấy chính xác vị trí
-    if (firstItemRef.current) {
-      const rect = firstItemRef.current.getBoundingClientRect();
-      const shift = needShift ? menuShift : 0;
-      const result = rect.left - offset - shift;
-      console.log(
-        "📐 Using DOM: rect.left =", rect.left,
-        "| offset =", offset,
-        "| shift =", shift,
-        "| result =", result
-      );
-      return result;
-    }
-
-    // Nếu chưa có DOM → dùng responsive logic fallback
-    console.warn("⚠️ Fallback to responsive estimation (no DOM)");
-
+  const estimateX = () => {
     const width = window.innerWidth;
     const ratio = window.devicePixelRatio;
 
-    if (width >= 1530 && width <= 1920) {
-      const min = 1530;
-      const max = 1920;
-      const minX = 150;
-      const maxX = 500;
-      const t = (width - min) / (max - min);
-      return minX + t * (maxX - minX);
-    }
+    // Hệ số điều chỉnh dựa vào mật độ điểm ảnh (tùy chọn, có thể tinh chỉnh thêm)
+    const ratioScale = Math.min(ratio, 2); // hạn chế ảnh hưởng quá lớn khi ratio > 2
 
-    if (ratio > 1 || (width < 1530 && ratio === 2)) return 150;
-    return 500;
+    const calculateRange = (
+      w: number,
+      minW: number,
+      maxW: number,
+      minX: number,
+      maxX: number
+    ) => {
+      const percent = (w - minW) / (maxW - minW);
+      return minX + percent * (maxX - minX);
+    };
+
+    if (width < 1530) return 150 * ratioScale;
+
+    if (width <= 1920) return calculateRange(width, 1530, 1920, 150, 500) * ratioScale;
+
+    if (width <= 2560) return calculateRange(width, 1920, 2560, 500, 700) * ratioScale;
+
+    if (width <= 3840) return calculateRange(width, 2560, 3840, 700, 900) * ratioScale;
+
+    if (width <= 5120) return calculateRange(width, 3840, 5120, 900, 1100) * ratioScale;
+
+    if (width <= 7680) return calculateRange(width, 5120, 7680, 1100, 1300) * ratioScale;
+
+    return 1300 * ratioScale; // max cho 8K+
   };
 
 
 
-  useEffect(() => {
-    const handleResize = () => {
-      let x = 0;
+  const getSmartCalculatedX = (
+    firstItemRef: React.RefObject<HTMLElement>,
+    needShift = false
+  ) => {
+    const OFFSET = 40;
+    const MENU_SHIFT = needShift ? 120 : 0;
 
-      if (scrollY.get() > 0) {
-        x = getSmartCalculatedX(true);
-      } else {
-        x = getSmartCalculatedX();
-      }
+    const fallback = estimateX() - OFFSET - MENU_SHIFT;
+
+    console.log("📐 Estimate X:", estimateX());
+
+    if (!firstItemRef.current) {
+      console.warn("⚠️ Fallback to estimateX (no DOM)");
+      return fallback;
+    }
+
+    const rect = firstItemRef.current.getBoundingClientRect();
+    const result = rect.left - OFFSET - MENU_SHIFT;
+
+    // Nếu quá gần mép trái, dùng estimate
+    if (rect.left < 80) return fallback;
+
+    console.log("📐 DOM-based X:", {
+      rectLeft: rect.left,
+      result,
+    });
+
+    return result;
+  };
+
+
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      const needShift = scrollY.get() > 0;
+      const x = getSmartCalculatedX(firstItemRef, needShift);
+      const windowWidth = window.innerWidth;
 
       let forceStatic = false;
+      let forceMobile = windowWidth < 1220;
 
       if (logoRef.current) {
         const logoRight = logoRef.current.getBoundingClientRect().right;
-        const margin = 16;
+        const diff = Math.round(x - logoRight);
+        console.log("📏 Logo Right:", logoRight, "Diff:", diff);
 
-        if (x < logoRight + margin) {
-          forceStatic = true;
-        }
+        forceStatic = diff < 150;
+        forceMobile ||= diff < 20;
       }
 
-      console.log("Resize detected, initialX:", x);
-      console.log("forceStatic:", forceStatic);
+      console.log("🌀 Responsive Resize:", { x, forceStatic, forceMobile });
 
       initialX.set(x);
-      setIsStatic(forceStatic);
-      setIsMobile(window.innerWidth < 1220);
-    };
+      setIsStatic(prev => prev !== forceStatic ? forceStatic : prev);
+      setIsMobile(prev => prev !== forceMobile ? forceMobile : prev);
+    }, 100); // debounce hợp lý hơn: 100ms
 
-    handleResize();
+    handleResize(); // Init
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      handleResize.cancel?.();
+    };
   }, [category, scrollY]);
+
+
 
 
   const left = useTransform(progress, [0, 1], [initialX.get(), 0]);
@@ -132,7 +162,7 @@ export const Navbar = () => {
   const logoScale = useTransform(progress, [0, 1], [1.8, 1]);
   const logoZ = useTransform(progress, [0, 1], [120, 101]);
 
-  const menuRight = useTransform(progress, [0, 1], [160, 40]);
+  const menuRight = useTransform(progress, [0, 1], [130, 40]);
   const flexGrow = useTransform(progress, [0, 1], [0, 1]);
   const subNavbarTop = useTransform([height, top], ([h, t]) => h + t);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -202,7 +232,10 @@ export const Navbar = () => {
             }}
           >
             {/* 🔆 Đốm sáng mờ ở nền logo */}
-            <div className="absolute w-[450px] h-[150px] bg-white opacity-55 blur-[70px] rounded-full -z-10" />
+            {isStatic && (
+              <div className="absolute w-[450px] h-[150px] bg-white opacity-55 blur-[70px] rounded-full -z-10" />
+            )}
+
             {/* 🔤 Chữ logo */}
             <img src="/images/logo.png" alt="Logo" className="relative z-10" style={{
               width: 82,
@@ -215,6 +248,7 @@ export const Navbar = () => {
           </motion.div>
         ) : (
           <motion.div
+            ref={logoRef}
             style={{
               position: "absolute",
               display: "flex",
@@ -388,35 +422,39 @@ export const Navbar = () => {
                 }}
                 className="flex items-center gap-4"
               >
-                <SepNavbarItem className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition" innerRef={(el) => {
-                  if (el && !firstItemRef.current) {
-                    firstItemRef.current = el;
-                  }
-                }}>
-                  Giới thiệu
-                </SepNavbarItem>
-                {category.map((cat) => (
-                  <SepNavbarItem
-                    className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
-                    key={cat.id}
-                    innerRef={(el) => {
-                      if (cat.id === activeCategory?.id) setAnchorRef(el);
-                    }}
-                    onMouseEnter={() => {
-                      setActiveCategory(cat);
-                      handleMouseEnter();
-                    }}
-                    href={`/category/${cat.id}`}
-                  >
-                    {cat.name}
-                  </SepNavbarItem>
-                ))}
-                <SepNavbarItem
-                  className="text-lg font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition"
-                  isLast
-                >
-                  Liên hệ
-                </SepNavbarItem>
+                {category.length > 0 && (
+                  <>
+                    <SepNavbarItem className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`} innerRef={(el) => {
+                      if (el && !firstItemRef.current) {
+                        firstItemRef.current = el;
+                      }
+                    }}>
+                      Giới thiệu
+                    </SepNavbarItem>
+                    {category.map((cat) => (
+                      <SepNavbarItem
+                        className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
+                        key={cat.id}
+                        innerRef={(el) => {
+                          if (cat.id === activeCategory?.id) setAnchorRef(el);
+                        }}
+                        onMouseEnter={() => {
+                          setActiveCategory(cat);
+                          handleMouseEnter();
+                        }}
+                        href={`/category/${cat.id}`}
+                      >
+                        {cat.name}
+                      </SepNavbarItem>
+                    ))}
+                    <SepNavbarItem
+                      className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
+                      isLast
+                    >
+                      Liên hệ
+                    </SepNavbarItem>
+                  </>
+                )}
               </motion.div>
             )}
           </div>
@@ -431,7 +469,7 @@ export const Navbar = () => {
             transition={{ duration: 0.2 }}
             style={{
               position: "fixed",
-              top: subNavbarTop,
+              top: isStatic ? 72 : subNavbarTop,
               left: subLeft,
               maxWidth: subWidth,
               zIndex: 40,
