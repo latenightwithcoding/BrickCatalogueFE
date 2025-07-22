@@ -47,7 +47,9 @@ export default function LoginPage() {
   }, [groupControls]);
 
   return (
-    <section className="relative flex h-screen w-full items-center justify-center overflow-hidden"
+    <motion.section initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: "easeOut" }} className="relative flex h-screen w-full items-center justify-center overflow-hidden"
       style={{
         backgroundImage: "url('/images/1.jpg')",
         backgroundSize: "cover",
@@ -132,6 +134,6 @@ export default function LoginPage() {
 
 
       </div>
-    </section>
+    </motion.section>
   );
 }
