@@ -442,7 +442,7 @@ export const Navbar = () => {
                           setActiveCategory(cat);
                           handleMouseEnter();
                         }}
-                        href={`/category/${cat.id}`}
+                        href={cat.child.length === 0 ? `/category/${cat.id}` : undefined}
                       >
                         {cat.name}
                       </SepNavbarItem>
