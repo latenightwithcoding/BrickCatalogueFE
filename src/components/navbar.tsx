@@ -1,5 +1,5 @@
 import { categoryServices } from "@/services/category";
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import SepNavbarItem from "./sepItem";
 import { SubNavbar } from "./subNavbar";
@@ -344,76 +344,77 @@ export const Navbar = () => {
                 </button>
 
                 {/* Danh mục xổ xuống */}
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="fixed top-0 left-0 w-screen h-screen bg-white z-[9999] p-6 overflow-auto"
-                  >
-                    {/* Nút đóng */}
-                    <div className="flex justify-end mb-4 items-center">
-                      <button
-                        onClick={() => setMenuOpen(false)}
-                        className="text-3xl font-bold text-gray-600 hover:text-black"
-                        aria-label="Đóng menu"
-                      >
-                        &times;
-                      </button>
-                    </div>
+                <AnimatePresence>
+                  {menuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="fixed top-0 left-0 w-screen h-screen bg-white z-[9999] p-6 overflow-auto"
+                    >
+                      {/* Nút đóng */}
+                      <div className="flex justify-end mb-6 mr-4 items-center">
+                        <button
+                          onClick={() => setMenuOpen(false)}
+                          className="text-3xl font-bold text-gray-600 hover:text-black"
+                          aria-label="Đóng menu"
+                        >
+                          &times;
+                        </button>
+                      </div>
 
-                    {/* Danh mục cha và con */}
-                    <div className="space-y-4">
-                      {/* Liên hệ */}
-                      <a
-                        href="/"
-                        onClick={() => setMenuOpen(false)}
-                        className="block w-full text-left text-gilroy text-gray-700 text-xl font-semibold py-2 px-4"
-                      >
-                        Giới thiệu
-                      </a>
-                      {category.map((cat) => (
-                        <div key={cat.id}>
-                          <button
-                            className="w-full text-gilroy text-left text-xl font-semibold text-black py-2 px-4 "
-                            onClick={() =>
-                              setActiveMobileParent(activeMobileParent === cat.id ? null : cat.id)
-                            }
-                          >
-                            {cat.name}
-                          </button>
+                      {/* Danh mục cha và con */}
+                      <div className="space-y-4">
+                        {/* Liên hệ */}
+                        <a
+                          href="/"
+                          onClick={() => setMenuOpen(false)}
+                          className="block w-full text-left text-gilroy text-black text-xl font-semibold py-2 px-4"
+                        >
+                          Giới thiệu
+                        </a>
+                        {category.map((cat) => (
+                          <div key={cat.id}>
+                            <button
+                              className="w-full text-gilroy text-left text-xl font-semibold text-black py-2 px-4 "
+                              onClick={() =>
+                                setActiveMobileParent(activeMobileParent === cat.id ? null : cat.id)
+                              }
+                            >
+                              {cat.name}
+                            </button>
 
-                          {/* Danh mục con */}
-                          {activeMobileParent === cat.id && cat.child?.length > 0 && (
-                            <div className="ml-4 mt-2 space-y-2">
-                              {cat.child.map((child) => (
-                                <a
-                                  key={child.id}
-                                  href={`/category/${child.id}`}
-                                  onClick={() => setMenuOpen(false)}
-                                  className="block text-gilroy text-gray-700 py-1 px-4 hover:bg-gray-200 rounded"
-                                >
-                                  {child.name}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                            {/* Danh mục con */}
+                            {activeMobileParent === cat.id && cat.child?.length > 0 && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                {cat.child.map((child) => (
+                                  <a
+                                    key={child.id}
+                                    href={`/category/${child.id}`}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="block text-gilroy text-gray-700 py-1 px-4 hover:bg-gray-200 rounded"
+                                  >
+                                    {child.name}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
 
-                      {/* Liên hệ */}
-                      <a
-                        href="/contact"
-                        onClick={() => setMenuOpen(false)}
-                        className="block w-full text-left text-xl font-semibold py-2 px-4"
-                      >
-                        Liên hệ
-                      </a>
-                    </div>
-                  </motion.div>
-                )}
-
+                        {/* Liên hệ */}
+                        <a
+                          href="/contact"
+                          onClick={() => setMenuOpen(false)}
+                          className="block w-full text-left text-xl font-semibold py-2 px-4"
+                        >
+                          Liên hệ
+                        </a>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </>
             ) : (
               <motion.div

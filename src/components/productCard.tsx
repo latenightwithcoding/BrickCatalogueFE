@@ -1,19 +1,31 @@
+import { ProductCardModel, Products } from "@/services/product";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
-export const ProductCard = () => {
+export const ProductCard = (data: Products) => {
     const [hovered, setHovered] = useState(false);
 
     return (
         <div
+            aria-label={`View product ${data.sku}`}
             className="relative flex w-full max-w-sm sm:max-w-md md:max-w-lg xl:max-w-xl aspect-[4/3] items-center justify-center overflow-hidden rounded-xl cursor-pointer transition-all duration-300"
-            style={{
-                backgroundImage: "url('/images/1.jpg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
+            onClick={() => {
+                window.location.href = `/product/${data.id}`;
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    window.location.href = `/product/${data.id}`;
+                }
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            role="button"
+            style={{
+                backgroundImage: `url(${data.images[0]}`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+            }}
+            tabIndex={0}
         >
             {/* Gradient nền mờ LUÔN hiển thị */}
             <div
@@ -56,7 +68,7 @@ export const ProductCard = () => {
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="absolute inset-0 h-full w-full z-30 flex items-end justify-center font-gilroy font-semibold text-lg sm:text-xl md:text-2xl text-white"
             >
-                <p className="pb-4">CL12-GP8801</p>
+                <p className="pb-4">{data.sku.toUpperCase()}</p>
             </motion.div>
         </div>
     );
