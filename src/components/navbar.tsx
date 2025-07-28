@@ -1,26 +1,34 @@
-import { categoryServices } from "@/services/category";
-import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { debounce } from "lodash";
+
 import SepNavbarItem from "./sepItem";
 import { SubNavbar } from "./subNavbar";
-import { debounce } from "lodash";
+
+import { categoryServices } from "@/services/category";
 
 export const Navbar = () => {
   const ref = useRef(null);
   const [category, setCategory] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [showSub, setShowSub] = useState(false);
-  const timeoutRef = useRef < NodeJS.Timeout | null > (null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [subLeft, setSubLeft] = useState(0);
   const [subWidth, setSubWidth] = useState(0);
-  const [anchorRef, setAnchorRef] = useState < HTMLElement | null > (null);
+  const [anchorRef, setAnchorRef] = useState<HTMLElement | null>(null);
   const [isStatic, setIsStatic] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const { scrollY } = useScroll();
   const smoothScroll = useSpring(scrollY, { stiffness: 200, damping: 30 });
   const progress = useTransform(smoothScroll, [0, 48], [0, 1]); // clamp trong khoảng 0–80px
-
 
   // const borderRadius = useTransform(scrollY, [0, 60], [40, 0]);
   // const bg = useTransform(scrollY, [0, 80], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
@@ -40,13 +48,17 @@ export const Navbar = () => {
   // const menuRight = useTransform(scrollY, [0, 80], [60, 40]);
   // const subNavbarTop = useTransform([height, top], ([h, t]) => h + t); // 64 is the height of the Navbar
 
-
   const borderRadius = useTransform(progress, [0, 1], [40, 0]);
-  const bg = useTransform(progress, [0, 1], ["rgba(255, 255, 255, 0.644)", "#ffffff88"]);
-  const boxShadow = useTransform(progress, [0, 1], [
-    "0 8px 32px rgba(0,0,0,0.12)",
-    "0 2px 12px rgba(0, 0, 0, 0.199)",
-  ]);
+  const bg = useTransform(
+    progress,
+    [0, 1],
+    ["rgba(255, 255, 255, 0.644)", "#ffffff88"],
+  );
+  const boxShadow = useTransform(
+    progress,
+    [0, 1],
+    ["0 8px 32px rgba(0,0,0,0.12)", "0 2px 12px rgba(0, 0, 0, 0.199)"],
+  );
 
   const initialX = useMotionValue(1000); // mặc định
 
@@ -62,32 +74,36 @@ export const Navbar = () => {
       minW: number,
       maxW: number,
       minX: number,
-      maxX: number
+      maxX: number,
     ) => {
       const percent = (w - minW) / (maxW - minW);
+
       return minX + percent * (maxX - minX);
     };
 
     if (width < 1530) return 150 * ratioScale;
 
-    if (width <= 1920) return calculateRange(width, 1530, 1920, 150, 500) * ratioScale;
+    if (width <= 1920)
+      return calculateRange(width, 1530, 1920, 150, 500) * ratioScale;
 
-    if (width <= 2560) return calculateRange(width, 1920, 2560, 500, 700) * ratioScale;
+    if (width <= 2560)
+      return calculateRange(width, 1920, 2560, 500, 700) * ratioScale;
 
-    if (width <= 3840) return calculateRange(width, 2560, 3840, 700, 900) * ratioScale;
+    if (width <= 3840)
+      return calculateRange(width, 2560, 3840, 700, 900) * ratioScale;
 
-    if (width <= 5120) return calculateRange(width, 3840, 5120, 900, 1100) * ratioScale;
+    if (width <= 5120)
+      return calculateRange(width, 3840, 5120, 900, 1100) * ratioScale;
 
-    if (width <= 7680) return calculateRange(width, 5120, 7680, 1100, 1300) * ratioScale;
+    if (width <= 7680)
+      return calculateRange(width, 5120, 7680, 1100, 1300) * ratioScale;
 
     return 1300 * ratioScale; // max cho 8K+
   };
 
-
-
   const getSmartCalculatedX = (
     firstItemRef: React.RefObject<HTMLElement>,
-    needShift = false
+    needShift = false,
   ) => {
     const OFFSET = 40;
     const MENU_SHIFT = needShift ? 120 : 0;
@@ -98,6 +114,7 @@ export const Navbar = () => {
 
     if (!firstItemRef.current) {
       console.warn("⚠️ Fallback to estimateX (no DOM)");
+
       return fallback;
     }
 
@@ -115,7 +132,6 @@ export const Navbar = () => {
     return result;
   };
 
-
   useEffect(() => {
     const handleResize = debounce(() => {
       const needShift = scrollY.get() > 0;
@@ -128,6 +144,7 @@ export const Navbar = () => {
       if (logoRef.current) {
         const logoRight = logoRef.current.getBoundingClientRect().right;
         const diff = Math.round(x - logoRight);
+
         console.log("📏 Logo Right:", logoRight, "Diff:", diff);
 
         forceStatic = diff < 150;
@@ -137,8 +154,8 @@ export const Navbar = () => {
       console.log("🌀 Responsive Resize:", { x, forceStatic, forceMobile });
 
       initialX.set(x);
-      setIsStatic(prev => prev !== forceStatic ? forceStatic : prev);
-      setIsMobile(prev => prev !== forceMobile ? forceMobile : prev);
+      setIsStatic((prev) => (prev !== forceStatic ? forceStatic : prev));
+      setIsMobile((prev) => (prev !== forceMobile ? forceMobile : prev));
     }, 100); // debounce hợp lý hơn: 100ms
 
     handleResize(); // Init
@@ -149,9 +166,6 @@ export const Navbar = () => {
       handleResize.cancel?.();
     };
   }, [category, scrollY]);
-
-
-
 
   const left = useTransform(progress, [0, 1], [initialX.get(), 0]);
   const top = useTransform(progress, [0, 1], [20, 0]);
@@ -166,11 +180,11 @@ export const Navbar = () => {
   const flexGrow = useTransform(progress, [0, 1], [0, 1]);
   const subNavbarTop = useTransform([height, top], ([h, t]) => h + t);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeMobileParent, setActiveMobileParent] = useState < number | null > (null);
-  const firstItemRef = useRef < HTMLElement | null > (null);
-  const logoRef = useRef < HTMLDivElement | null > (null);
-
-
+  const [activeMobileParent, setActiveMobileParent] = useState<number | null>(
+    null,
+  );
+  const firstItemRef = useRef<HTMLElement | null>(null);
+  const logoRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (anchorRef) {
@@ -183,11 +197,11 @@ export const Navbar = () => {
     }
   }, [anchorRef, showSub]);
 
-
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const response = await categoryServices.getAll();
+
         if (response) {
           setCategory(response);
         } else {
@@ -197,6 +211,7 @@ export const Navbar = () => {
         console.error("Error fetching categories:", error);
       }
     };
+
     fetchCategory();
   }, []);
 
@@ -211,7 +226,10 @@ export const Navbar = () => {
   };
 
   return (
-    <div ref={ref} style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 100 }}>
+    <div
+      ref={ref}
+      style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 100 }}
+    >
       {/* Vùng chứa navbar + submenu: dùng để bắt hover tổng */}
       <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         {/* Logo */}
@@ -237,11 +255,16 @@ export const Navbar = () => {
             )}
 
             {/* 🔤 Chữ logo */}
-            <img src="/images/logo.png" alt="Logo" className="relative z-10" style={{
-              width: 82,
-              height: 82,
-              objectFit: "contain",
-            }} />
+            <img
+              alt="Logo"
+              className="relative z-10"
+              src="/images/logo.png"
+              style={{
+                width: 82,
+                height: 82,
+                objectFit: "contain",
+              }}
+            />
             {/* <span className="font-gilroy font-extrabold text-4xl text-[#527aaf] relative z-10">
             Xuân Hương
           </span> */}
@@ -263,11 +286,16 @@ export const Navbar = () => {
             {/* 🔆 Đốm sáng mờ ở nền logo */}
             <div className="absolute w-[450px] h-[150px] bg-white opacity-55 blur-[70px] rounded-full -z-10" />
             {/* 🔤 Chữ logo */}
-            <img src="/images/logo.png" alt="Logo" className="relative z-10" style={{
-              width: 82,
-              height: 82,
-              objectFit: "contain",
-            }} />
+            <img
+              alt="Logo"
+              className="relative z-10"
+              src="/images/logo.png"
+              style={{
+                width: 82,
+                height: 82,
+                objectFit: "contain",
+              }}
+            />
             {/* <span className="font-gilroy font-extrabold text-4xl text-[#527aaf] relative z-10">
             Xuân Hương
           </span> */}
@@ -275,22 +303,24 @@ export const Navbar = () => {
         )}
 
         {/* Nền */}
-        {!isStatic ? (<motion.div
-          style={{
-            position: "absolute",
-            top,
-            left,
-            right: 0,
-            height,
-            pointerEvents: "auto",
-            borderTopLeftRadius: borderRadius,
-            borderBottomLeftRadius: borderRadius,
-            backgroundColor: bg,
-            backdropFilter: "blur(8px)",
-            boxShadow: boxShadow,
-            zIndex: 1,
-          }}
-        />) : (
+        {!isStatic ? (
+          <motion.div
+            style={{
+              position: "absolute",
+              top,
+              left,
+              right: 0,
+              height,
+              pointerEvents: "auto",
+              borderTopLeftRadius: borderRadius,
+              borderBottomLeftRadius: borderRadius,
+              backgroundColor: bg,
+              backdropFilter: "blur(8px)",
+              boxShadow: boxShadow,
+              zIndex: 1,
+            }}
+          />
+        ) : (
           <motion.div
             style={{
               position: "absolute",
@@ -308,7 +338,6 @@ export const Navbar = () => {
             }}
           />
         )}
-
 
         {/* Danh mục */}
         <motion.div
@@ -329,8 +358,8 @@ export const Navbar = () => {
               <>
                 {/* Nút Hamburger */}
                 <button
-                  onClick={() => setMenuOpen(!menuOpen)}
                   className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 bg-white shadow-md"
+                  onClick={() => setMenuOpen(!menuOpen)}
                 >
                   <svg
                     className="w-6 h-6 text-black"
@@ -339,7 +368,11 @@ export const Navbar = () => {
                     strokeWidth={2}
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    <path
+                      d="M4 6h16M4 12h16M4 18h16"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
 
@@ -347,18 +380,18 @@ export const Navbar = () => {
                 <AnimatePresence>
                   {menuOpen && (
                     <motion.div
-                      initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
                       className="fixed top-0 left-0 w-screen h-screen bg-white z-[9999] p-6 overflow-auto"
+                      exit={{ opacity: 0 }}
+                      initial={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
                     >
                       {/* Nút đóng */}
                       <div className="flex justify-end mb-6 mr-4 items-center">
                         <button
-                          onClick={() => setMenuOpen(false)}
-                          className="text-3xl font-bold text-gray-600 hover:text-black"
                           aria-label="Đóng menu"
+                          className="text-3xl font-bold text-gray-600 hover:text-black"
+                          onClick={() => setMenuOpen(false)}
                         >
                           &times;
                         </button>
@@ -368,9 +401,9 @@ export const Navbar = () => {
                       <div className="space-y-4">
                         {/* Liên hệ */}
                         <a
+                          className="block w-full text-left text-gilroy text-black text-xl font-semibold py-2 px-4"
                           href="/"
                           onClick={() => setMenuOpen(false)}
-                          className="block w-full text-left text-gilroy text-black text-xl font-semibold py-2 px-4"
                         >
                           Giới thiệu
                         </a>
@@ -379,35 +412,38 @@ export const Navbar = () => {
                             <button
                               className="w-full text-gilroy text-left text-xl font-semibold text-black py-2 px-4 "
                               onClick={() =>
-                                setActiveMobileParent(activeMobileParent === cat.id ? null : cat.id)
+                                setActiveMobileParent(
+                                  activeMobileParent === cat.id ? null : cat.id,
+                                )
                               }
                             >
                               {cat.name}
                             </button>
 
                             {/* Danh mục con */}
-                            {activeMobileParent === cat.id && cat.child?.length > 0 && (
-                              <div className="ml-4 mt-2 space-y-2">
-                                {cat.child.map((child) => (
-                                  <a
-                                    key={child.id}
-                                    href={`/category/${child.id}`}
-                                    onClick={() => setMenuOpen(false)}
-                                    className="block text-gilroy text-gray-700 py-1 px-4 hover:bg-gray-200 rounded"
-                                  >
-                                    {child.name}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
+                            {activeMobileParent === cat.id &&
+                              cat.child?.length > 0 && (
+                                <div className="ml-4 mt-2 space-y-2">
+                                  {cat.child.map((child) => (
+                                    <a
+                                      key={child.id}
+                                      className="block text-gilroy text-gray-700 py-1 px-4 hover:bg-gray-200 rounded"
+                                      href={`/category/${child.id}`}
+                                      onClick={() => setMenuOpen(false)}
+                                    >
+                                      {child.name}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         ))}
 
                         {/* Liên hệ */}
                         <a
+                          className="block w-full text-left text-xl font-semibold py-2 px-4"
                           href="/contact"
                           onClick={() => setMenuOpen(false)}
-                          className="block w-full text-left text-xl font-semibold py-2 px-4"
                         >
                           Liên hệ
                         </a>
@@ -418,24 +454,32 @@ export const Navbar = () => {
               </>
             ) : (
               <motion.div
+                className="flex items-center gap-4"
                 style={{
                   flexGrow: flexGrow,
                 }}
-                className="flex items-center gap-4"
               >
                 {category.length > 0 && (
                   <>
-                    <SepNavbarItem className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`} innerRef={(el) => {
-                      if (el && !firstItemRef.current) {
-                        firstItemRef.current = el;
-                      }
-                    }}>
+                    <SepNavbarItem
+                      className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
+                      innerRef={(el) => {
+                        if (el && !firstItemRef.current) {
+                          firstItemRef.current = el;
+                        }
+                      }}
+                    >
                       Giới thiệu
                     </SepNavbarItem>
                     {category.map((cat) => (
                       <SepNavbarItem
-                        className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
                         key={cat.id}
+                        className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
+                        href={
+                          cat.child.length === 0
+                            ? `/category/${cat.id}`
+                            : undefined
+                        }
                         innerRef={(el) => {
                           if (cat.id === activeCategory?.id) setAnchorRef(el);
                         }}
@@ -443,14 +487,13 @@ export const Navbar = () => {
                           setActiveCategory(cat);
                           handleMouseEnter();
                         }}
-                        href={cat.child.length === 0 ? `/category/${cat.id}` : undefined}
                       >
                         {cat.name}
                       </SepNavbarItem>
                     ))}
                     <SepNavbarItem
-                      className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
                       isLast
+                      className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
                     >
                       Liên hệ
                     </SepNavbarItem>
@@ -461,13 +504,11 @@ export const Navbar = () => {
           </div>
         </motion.div>
 
-
         {/* SubNavbar nằm dưới Navbar */}
         {showSub && activeCategory?.child?.length > 0 && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0 }}
             style={{
               position: "fixed",
               top: isStatic ? 72 : subNavbarTop,
@@ -475,6 +516,7 @@ export const Navbar = () => {
               maxWidth: subWidth,
               zIndex: 40,
             }}
+            transition={{ duration: 0.2 }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >

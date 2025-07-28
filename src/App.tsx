@@ -1,20 +1,21 @@
 import { Route, Routes } from "react-router-dom";
 
+import LoginPage from "./pages/admin/login";
+import ProductDetail from "./pages/productDetail";
+import AdminIndexPage from "./pages/admin/index";
+
 import IndexPage from "@/pages/index";
 import CategoryProduct from "@/pages/categoryProduct";
-import PricingPage from "@/pages/pricing";
 import BlogPage from "@/pages/blog";
-import AboutPage from "@/pages/about";
-import LoginPage from "./pages/admin/login";
 
 function App() {
   return (
     <Routes>
       <Route element={<IndexPage />} path="/" />
       <Route element={<CategoryProduct />} path="/category/:id" />
-      <Route element={<PricingPage />} path="/pricing" />
+      <Route element={<ProductDetail />} path="/product/:id" />
       <Route element={<BlogPage />} path="/blog" />
-      <Route element={<AboutPage />} path="/about" />
+      <Route element={<AdminIndexPage />} path="/admin" />
       <Route path="/admin">
         <Route element={<LoginPage />} path="login" />
       </Route>

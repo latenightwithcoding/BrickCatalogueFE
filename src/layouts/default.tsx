@@ -7,9 +7,9 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div data-lenis className="lenis-wrapper min-h-screen flex flex-col">
+    <div data-lenis className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
-      <main className="flex-1 w-full pb-12">
+      <main className="flex-1 w-full max-w-full overflow-hidden">
         {children}
       </main>
       <Footer />

@@ -1,4 +1,5 @@
 export type SiteConfig = typeof siteConfig;
+import { GiShop } from "react-icons/gi";
 
 export const siteConfig = {
   name: "Vite + HeroUI",
@@ -58,6 +59,10 @@ export const siteConfig = {
       label: "Logout",
       href: "/logout",
     },
+  ],
+  navAdminMenuItems: [
+    { label: "Quản lý sản phẩm", href: "/admin", icon: GiShop },
+    // ...
   ],
   links: {
     github: "https://github.com/frontio-ai/heroui",
