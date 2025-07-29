@@ -1,3 +1,4 @@
+import { create } from "domain";
 import api from "../api/axios-config";
 
 export interface ProductCardModel {
@@ -31,7 +32,14 @@ export interface ProductDetailModel {
   relatedProducts: Products[];
 }
 
-export interface ProductDetailModel {
+export interface ResponseProduct {
+  items: ProductsDetailModel[];
+  totalPages: number;
+  page: number;
+  totalItems: number;
+}
+
+export interface ProductsDetailModel {
   id: string;
   name: string;
   description: string;
@@ -106,6 +114,27 @@ export const productServices = {
       }
     } catch (error) {
       console.error("Error fetching product for admin by ID:", error);
+      throw error;
+    }
+  },
+  createProduct: async (product: FormData): Promise<ProductDetailModel | null> => {
+    try {
+      const response = await api.post(`/product`, product, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === 201) {
+        console.log("Product created successfully:", response.data.data);
+
+        return response.data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
       throw error;
     }
   }

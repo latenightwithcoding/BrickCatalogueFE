@@ -6,17 +6,18 @@ import {
     ModalHeader,
     ModalBody,
     ModalFooter,
+    Select, SelectItem,
+    addToast
 } from "@heroui/react";
-import { Select, SelectItem } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { Upload, X } from "lucide-react";
-import { addToast } from "@heroui/react";
 import ReactQuill from "react-quill";
 
 import { productServices } from "@/services/product";
 import { Category, categoryServices, subCategory } from "@/services/category";
 import "react-quill/dist/quill.snow.css";
 import { useFormik } from "formik";
+import * as Yup from "yup";
 
 // const categories = [
 //     { key: "clothes", label: "Quần áo" },
@@ -65,19 +66,12 @@ export interface GeneralData {
 }
 
 export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
-    const [selectedCategory, setSelectedCategory] = useState < Set < string >> (
-        new Set([]),
-  );
-    const [productName, setProductName] = useState("");
-    const [productDescription, setProductDescription] = useState("");
-    const [toggleAttributeForm, setToggleAttributeForm] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState < Set < string >> (new Set([]));
     const [productImage, setProductImage] = useState < File[] > ([]);
     const [previewIndex, setPreviewIndex] = useState < number | null > (null);
     const [category, setCategory] = useState < Category[] > ([]);
     const [subCategory, setSubCategory] = useState < subCategory[] > ([]);
-    const [selectedFinalCategory, setSelectedFinalCategory] = useState <
-        Set < string >
-  > (new Set([]));
+    const [selectedFinalCategory, setSelectedFinalCategory] = useState < Set < string >> (new Set([]));
     const [errors, setErrors] = useState < Record < string, string>> ({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,7 +81,7 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
             .replace(/[\u0300-\u036f]/g, "")
             .replace(/đ/g, "d")
             .replace(/Đ/g, "D")
-            .replace(/\s+/g, "") // bỏ khoảng trắng nếu cần
+            .replace(/\s+/g, "")
             .toLowerCase();
     }
 
@@ -111,34 +105,56 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
         }
     };
 
-    // Handle image upload
-    const handleImageUpload = (parentName: string, file: File) => {
-        const imageUrl = URL.createObjectURL(file);
-    };
+    const validationSchema = Yup.object().shape({
+        name: Yup.string().required("Tên sản phẩm là bắt buộc"),
+        sku: Yup.string().required("Mã sản phẩm là bắt buộc"),
+        description: Yup.string().required("Mô tả sản phẩm là bắt buộc"),
+        size: Yup.string().required("Kích thước sản phẩm là bắt buộc"),
+        sizeUnit: Yup.string().required("Đơn vị kích thước là bắt buộc"),
+    });
 
-    // Remove image
-    const removeImage = (parentName: string) => { };
+    const formik = useFormik({
+        initialValues: {
+            name: "",
+            sku: "",
+            description: "",
+            size: "",
+            sizeUnit: "cm", // ✅ đặt mặc định là "cm"
+            images: [],
+        },
+        validationSchema,
+        onSubmit: async (values) => {
+            if (productImage.length === 0) {
+                setErrors((prev) => ({
+                    ...prev,
+                    images: "Ít nhất một ảnh sản phẩm là bắt buộc",
+                }));
+                addToast({
+                    title: "Lỗi",
+                    description: "Ít nhất một ảnh sản phẩm là bắt buộc",
+                    color: "danger",
+                });
+                return;
+            }
+            const data = new FormData();
+            data.append("name", values.name);
+            data.append("sku", values.sku);
+            data.append("description", values.description);
+            data.append("size", values.size);
+            data.append("sizeUnit", values.sizeUnit);
+            data.append("categoryId", Array.from(selectedFinalCategory)[0] || Array.from(selectedCategory)[0] || "");
+            productImage.forEach((file) => {
+                data.append("images", file);
+            });
 
-    // const formik = useFormik({
-    //     initialValues: {
-    //         name: "",
-    //         description: "",
-    //         categoryId: "",
-    //         attributes: [],
-    //         variants: [],
-    //     },
-    //     onSubmit: async (values) => {
-    //         setIsSubmitting(true);
-    //         try {
-    //             const productData: ProductInput = {
-    //                 name: values.name,
-    //                 description: values.description,
-    //                 categoryId: Array.from(selectedCategory)[0] || "",
-    //                 attributes: values.attributes,
-    //                 variants: values.variants,
-    //             }
-    //         }}
-    // });
+            try {
+                const response = await productServices.createProduct(data);
+                console.log("Product created successfully:", response);
+            } catch (error) {
+                console.error("Error creating product:", error);
+            }
+        },
+    });
 
     // xử lý upload ảnh sản phẩm tối đa là 5 tấm
     const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,9 +173,7 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
     function closeModal() {
         onOpenChange(false);
         setSelectedCategory(new Set([]));
-        setProductName("");
-        setProductDescription("");
-        setToggleAttributeForm(false);
+        formik.resetForm();
         setProductImage([]);
         setPreviewIndex(null);
         setSelectedFinalCategory(new Set([])); // Reset selected final category
@@ -337,18 +351,61 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                 label="Tên sản phẩm"
                                 placeholder="Nhập tên sản phẩm"
                                 type="text"
-                                value={productName}
-                                onChange={(e) => setProductName(e.target.value)}
+                                value={formik.values.name}
+                                onChange={formik.handleChange("name")}
                             />
+                            {formik.touched.name &&
+                                typeof formik.errors.name === "string" ? (
+                                <p className="text-red-500 text-sm">{formik.errors.name}</p>
+                            ) : null}
                             <Input
                                 required
                                 className="mb-4"
                                 label="Mã sản phẩm"
                                 placeholder="Nhập mã sản phẩm"
                                 type="text"
-                                value={productSKU}
-                                onChange={(e) => setProductName(e.target.value)}
+                                value={formik.values.sku}
+                                onChange={formik.handleChange("sku")}
                             />
+                            {formik.touched.sku &&
+                                typeof formik.errors.sku === "string" ? (
+                                <p className="text-red-500 text-sm">{formik.errors.sku}</p>
+                            ) : null}
+                            <Input
+                                required
+                                className="mb-4"
+                                label="Kích thước sản phẩm"
+                                placeholder="Nhập kích thước sản phẩm"
+                                type="text"
+                                value={formik.values.size}
+                                onChange={formik.handleChange("size")}
+                            />
+                            {formik.touched.size &&
+                                typeof formik.errors.size === "string" ? (
+                                <p className="text-red-500 text-sm">
+                                    {formik.errors.size}
+                                </p>
+                            ) : null}
+                            <Select
+                                className="w-full mb-4"
+                                label="Đơn vị kích thước"
+                                placeholder="Chọn đơn vị kích thước"
+                                selectedKeys={new Set([formik.values.sizeUnit])} // ✅ luôn có 1 giá trị mặc định
+                                onSelectionChange={(keys) => {
+                                    const stringKeys = Array.from(keys as Set<unknown>).map(String);
+                                    formik.setFieldValue("sizeUnit", stringKeys[0]);
+                                }}
+                            >
+                                <SelectItem key="cm">cm</SelectItem>
+                                <SelectItem key="m">m</SelectItem>
+                                <SelectItem key="mm">mm</SelectItem>
+                            </Select>
+                            {formik.touched.sizeUnit &&
+                                typeof formik.errors.sizeUnit === "string" ? (
+                                <p className="text-red-500 text-sm">
+                                    {formik.errors.sizeUnit}
+                                </p>
+                            ) : null}
                             {/* <Textarea
                                 label="Mô tả sản phẩm"
                                 placeholder="Nhập mô tả sản phẩm"
@@ -367,8 +424,8 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                 className="min-h-36 h-36 mb-12"
                                 readOnly={isSubmitting}
                                 theme="snow"
-                                value={productDescription}
-                                onChange={handleEditorChange}
+                                value={formik.values.description}
+                                onChange={formik.handleChange("description")}
                             />
                             {/* </div> */}
                             {errors.description && (
@@ -425,9 +482,9 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                     </Select>
                                 )}
                         </ModalBody>
-                        <ModalFooter className="flex flex-row items-center justify-between">
+                        <ModalFooter className="flex flex-row items-center">
                             <Button
-                                variant="light"
+                                variant="bordered"
                                 onPress={() => {
                                     closeModal();
                                     onClose();
@@ -435,7 +492,8 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                             >
                                 Hủy
                             </Button>
-                            <Button color="primary" variant="solid" onPress={handleSubmit}>
+                            <Button color="primary" variant="solid" onPress={
+                                formik.handleSubmit}>
                                 Tạo sản phẩm
                             </Button>
                         </ModalFooter>

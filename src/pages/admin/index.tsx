@@ -30,13 +30,15 @@ import {
   ProductModal,
   VariantData,
 } from "@/components/product-modal";
+import { ProductDetailModel } from "@/services/product";
+import { ProductsDetailModel } from "@/services/product";
 
 export default function AdminIndexPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState < ResponseModel | null > (null);
+  const [products, setProducts] = useState < ResponseProduct | null > (null);
   const [request, setRequest] = useState < RequestProduct > ({
     page: 1,
     pageSize: 10,
@@ -54,7 +56,10 @@ export default function AdminIndexPage() {
     setIsLoading(true);
     const fetchShopData = async () => {
       try {
-        const response = await productServices.getProductsForAdmin(request);
+        const response = await productServices.getProductsForAdmin({
+          ...request,
+          page: page,
+        });
 
         if (response) {
           setProducts(response);
@@ -129,23 +134,22 @@ export default function AdminIndexPage() {
               loadingState={isLoading ? "loading" : "idle"}
             >
               {/* Example data, replace with actual product data */}
-              {products && products.data && products.data.length > 0 ? (
-                products &&
-                products.data.map((product: ProductAllRes) => (
+              {products && products.items.length > 0 ? (
+                products.items.map((product: ProductsDetailModel) => (
                   <TableRow key={product.id}>
                     <TableCell className="text-left">
                       <img
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded-lg"
-                        src={product.thumbnail}
+                        src={product.images[0]}
                       />
                     </TableCell>
-                    <TableCell className="text-left line-clamp-2">
+                    <TableCell className="text-left">
                       {product.name}
                     </TableCell>
                     <TableCell className="text-left">{product.sku}</TableCell>
                     <TableCell className="text-left">
-                      {product.categoryName}
+                      {product.category.name}
                     </TableCell>
                     <TableCell className="text-left">
                       {product.size} {product.sizeUnit}
