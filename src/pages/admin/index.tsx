@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 import { useParams } from "react-router-dom";
 
-import { productServices } from "@/services/product";
+import { productServices, RequestProduct } from "@/services/product";
 import { Category, categoryServices, subCategory } from "@/services/category";
 import { authService } from "@/services/auth";
 import AdminLayout from "@/layouts/admin";
@@ -36,13 +36,10 @@ export default function AdminIndexPage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<ResponseModel | null>(null);
-  const [request, setRequest] = useState<RequestProduct>({
+  const [products, setProducts] = useState < ResponseModel | null > (null);
+  const [request, setRequest] = useState < RequestProduct > ({
     page: 1,
     pageSize: 10,
-    categoryId: "",
-    sortBy: "",
-    isDescending: false,
     keywords: null,
   });
 
@@ -57,10 +54,7 @@ export default function AdminIndexPage() {
     setIsLoading(true);
     const fetchShopData = async () => {
       try {
-        const response = await productServices.getAllAdmin(slug, {
-          ...request,
-          page: page,
-        });
+        const response = await productServices.getProductsForAdmin(request);
 
         if (response) {
           setProducts(response);
@@ -187,29 +181,29 @@ export default function AdminIndexPage() {
 
 export function AdminEditProductPage() {
   const { id } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState<Set<string>>(
+  const [selectedCategory, setSelectedCategory] = useState < Set < string >> (
     new Set([]),
   );
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [toggleAttributeForm, setToggleAttributeForm] = useState(false);
-  const [productImage, setProductImage] = useState<File[]>([]);
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const [category, setCategory] = useState<Category[]>([]);
-  const [subCategory, setSubCategory] = useState<subCategory[]>([]);
-  const [selectedFinalCategory, setSelectedFinalCategory] = useState<
-    Set<string>
-  >(new Set([]));
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [productImage, setProductImage] = useState < File[] > ([]);
+  const [previewIndex, setPreviewIndex] = useState < number | null > (null);
+  const [category, setCategory] = useState < Category[] > ([]);
+  const [subCategory, setSubCategory] = useState < subCategory[] > ([]);
+  const [selectedFinalCategory, setSelectedFinalCategory] = useState <
+    Set < string >
+  > (new Set([]));
+  const [errors, setErrors] = useState < Record < string, string>> ({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [generalData, setGeneralData] = useState<GeneralData>({
+  const [generalData, setGeneralData] = useState < GeneralData > ({
     price: "",
     stock: "",
     sku: "",
   });
   const [enableClassification, setEnableClassification] = useState(false);
 
-  const [attributes, setAttributes] = useState<ProductAttribute[]>([
+  const [attributes, setAttributes] = useState < ProductAttribute[] > ([
     // {
     //     id: '1',
     //     name: 'Màu',
@@ -230,111 +224,6 @@ export function AdminEditProductPage() {
       .replace(/Đ/g, "D")
       .replace(/\s+/g, "") // bỏ khoảng trắng nếu cần
       .toLowerCase();
-  }
-
-  function handleSubmitData(input: ProductInput) {
-    const { name, description, categoryId, attributes, variants } = input;
-
-    const result = {
-      Name: name,
-      Description: description,
-      CategoryId: categoryId,
-      Attribute: !enableClassification
-        ? []
-        : attributes.map((attr, idx) => {
-            const isParent = idx === 0;
-
-            // Lọc bỏ option trống
-            const validOptions = attr.options.filter(
-              (opt) => opt.value.trim() !== "",
-            );
-
-            return {
-              Name: attr.name,
-              isParent,
-              Options: validOptions.map((opt, optionIdx) => {
-                let imageKey = null;
-
-                if (isParent) {
-                  // Duyệt theo thứ tự unique parentName trong variantData có parentImage
-                  const imageIndex = [
-                    ...new Map(
-                      variantData
-                        .filter((v) => v.parentImage) // Chỉ lấy variant có hình
-                        .map((v) => [v.parentName, v]), // Duy nhất theo parentName
-                    ).values(),
-                  ].findIndex((v) => v.parentName === opt.value);
-
-                  if (imageIndex !== -1) {
-                    imageKey = `AttributeImage[${imageIndex}]`;
-                  }
-                }
-
-                return {
-                  Value: opt.value,
-                  ...(isParent ? { Image: imageKey } : {}),
-                };
-              }),
-            };
-          }),
-      Variant: enableClassification
-        ? variants.map((variant) => {
-            const attributeIndex: number[] = [];
-
-            attributes.forEach((attr, attrIdx) => {
-              const validOptions = attr.options.filter(
-                (opt) => opt.value.trim() !== "",
-              );
-              const valueToFind =
-                attrIdx === 0 ? variant.parentName : variant.childName;
-              const index = validOptions.findIndex(
-                (opt) => opt.value === valueToFind,
-              );
-
-              if (index === -1) {
-                throw new Error(
-                  `Không tìm thấy "${valueToFind}" trong thuộc tính "${attr.name}"`,
-                );
-              }
-              attributeIndex.push(index);
-            });
-
-            // Tạo SKU nếu chưa có
-            const randomSuffix = Math.floor(Math.random() * 900 + 100); // 100 - 999
-            let generatedSKU = "";
-
-            const parent = removeVietnameseTones(variant.parentName || "");
-            const child = removeVietnameseTones(variant.childName || "");
-
-            if (variant.sku && variant.sku.trim() !== "") {
-              generatedSKU = variant.sku.trim();
-            } else {
-              generatedSKU = child
-                ? `${parent}_${child}_${randomSuffix}`
-                : `${parent}_${randomSuffix}`;
-            }
-
-            return {
-              AttributeIndex: attributeIndex,
-              Price: parseFloat(variant.price),
-              Stock: parseInt(variant.stock, 10),
-              SKU: generatedSKU,
-            };
-          })
-        : [
-            {
-              AttributeIndex: [],
-              Price: parseFloat(generalData.price),
-              Stock: parseInt(generalData.stock, 10),
-              SKU:
-                generalData.sku ||
-                `sku_${Math.floor(Math.random() * 900 + 100)}`,
-            },
-          ],
-    };
-
-    // console.log("Submitted Data:", result);
-    return result;
   }
 
   const handleImageClick = (index: number) => {
@@ -358,7 +247,7 @@ export function AdminEditProductPage() {
   };
 
   // Dữ liệu bảng phân loại
-  const [variantData, setVariantData] = useState<VariantData[]>([
+  const [variantData, setVariantData] = useState < VariantData[] > ([
     // SE group
     // { parentName: "Đỏ", parentImage: null, childName: "M", price: "", stock: "", sku: "" },
     // { parentName: "Đỏ", parentImage: null, childName: "L", price: "", stock: "", sku: "" },
@@ -575,7 +464,7 @@ export function AdminEditProductPage() {
             setSelectedFinalCategory(
               new Set([
                 product.category?.subCategories?.[0]?.id ||
-                  product.category?.id,
+                product.category?.id,
               ]),
             );
 

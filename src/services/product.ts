@@ -45,6 +45,12 @@ export interface ProductDetailModel {
   images: string[];
 }
 
+export interface RequestProduct {
+  page: number;
+  pageSize: number;
+  keywords?: string | null;
+}
+
 export const productServices = {
   getProducts: async (categoryId: string): Promise<ProductCardModel | null> => {
     try {
@@ -82,9 +88,12 @@ export const productServices = {
       throw error;
     }
   },
-  getProductsForAdmin: async (id: string): Promise<ProductDetailModel | null> => {
+  getProductsForAdmin: async (request: RequestProduct): Promise<ProductDetailModel | null> => {
     try {
-      const response = await api.get(`/product/admin/${id}`, {
+      const response = await api.get(`/product/admin`, {
+        params: {
+          ...request
+        },
         withCredentials: true,
       });
 
