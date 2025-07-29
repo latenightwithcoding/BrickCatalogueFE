@@ -30,6 +30,7 @@ export const authService = {
 
       if (response.status === 200) {
         localStorage.setItem("token", response.data.userData.token);
+        localStorage.setItem("name", response.data.userData.name);
 
         return response.data.userData;
       } else {

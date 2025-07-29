@@ -15,7 +15,7 @@ import {
   SelectItem,
 } from "@heroui/react";
 import { Upload, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactQuill from "react-quill";
 import { useParams } from "react-router-dom";
 
@@ -32,34 +32,37 @@ import {
 } from "@/components/product-modal";
 import { ProductDetailModel } from "@/services/product";
 import { ProductsDetailModel } from "@/services/product";
+import { useSearchParams } from "react-router-dom";
 
 export default function AdminIndexPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState < ResponseProduct | null > (null);
   const [request, setRequest] = useState < RequestProduct > ({
-    page: 1,
+    page: page,
     pageSize: 10,
-    keywords: null,
+    keyword: searchParams.get("keyword") || null,
   });
+  const inputRef = useRef < HTMLInputElement > (null);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
-    const slug = localStorage.getItem("userPath");
-
-    if (!slug) {
-      const logout = async () => {
-        await authService.logout();
-      };
-    }
-    setIsLoading(true);
     const fetchShopData = async () => {
+      setIsLoading(true);
       try {
         const response = await productServices.getProductsForAdmin({
           ...request,
           page: page,
         });
+
+        const newParams: Record<string, string> = { page: String(page) };
+        if (request.keyword) {
+          newParams.keyword = request.keyword;
+        }
+        setSearchParams(newParams);
 
         if (response) {
           setProducts(response);
@@ -75,30 +78,53 @@ export default function AdminIndexPage() {
       } finally {
         setIsLoading(false);
       }
-
-      // Fetch shop data logic here
-      // This is where you would call your API to get the shop's products
     };
 
     fetchShopData();
-  }, [page]);
+  }, [page, request.keyword, isOpen]);
 
   return (
     <AdminLayout>
       <section className="flex flex-col max-w-full gap-4 py-8 md:py-10">
-        <div className="flex items-center justify-between">
-          <h1 className={"text-2xl font-semibold"}>Thiết lập cửa hàng</h1>
+        <div className="flex items-center justify-between mt-4">
+          <h1 className={"text-2xl font-semibold"}>Quản lý sản phẩm</h1>
           <ProductModal isOpen={isOpen} onOpenChange={onOpenChange} />
-          <Button
-            className="mt-4"
-            color="primary"
-            variant="solid"
-            onPress={() => {
-              onOpenChange();
-            }}
-          >
-            Thêm sản phẩm
-          </Button>
+          <div className="flex flex-row items-center gap-4">
+            <Input
+              className="w-96 "
+              placeholder="Tìm kiếm theo tên hoặc mã sản phẩm..."
+              endContent={
+                showHint && (
+                  <div className="flex items-center text-gray-500 text-[12px] w-52">
+                    <p>Nhấn Enter để tìm kiếm</p>
+                  </div>
+                )
+              }
+              defaultValue={searchParams.get("keyword") || ""}
+              ref={inputRef}
+              onChange={() => {
+                setShowHint(!!inputRef.current?.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setPage(1);
+                  setRequest((prev) => ({
+                    ...prev,
+                    keyword: inputRef.current?.value || "",
+                  }));
+                }
+              }}
+            />
+            <Button
+              color="primary"
+              variant="solid"
+              onPress={() => {
+                onOpenChange();
+              }}
+            >
+              Thêm sản phẩm
+            </Button>
+          </div>
         </div>
         <div>
           <Table

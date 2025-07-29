@@ -9,6 +9,7 @@ import { ProductDetailModel, productServices } from "@/services/product";
 import ImagePreview from "@/components/ImagePreview";
 import DefaultLayout from "@/layouts/default";
 import { ProductCard } from "@/components/productCard";
+import parse from "html-react-parser";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -17,7 +18,7 @@ export default function ProductDetail() {
   const [isMobile, setIsMobile] = useState(false);
   const [fontScale, setFontScale] = useState(1);
   const [isWrap, setIsWrap] = useState(false);
-  const [data, setData] = useState<ProductDetailModel | null>(null);
+  const [data, setData] = useState < ProductDetailModel | null > (null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -250,7 +251,7 @@ export default function ProductDetail() {
                     transform: `scale(${fontScale + (isMobile ? 0.1 : 0)})`,
                   }}
                 >
-                  {data?.description ?? "Không có mô tả cho sản phẩm này."}
+                  {parse(data?.description ?? "Không có mô tả cho sản phẩm này.")}
                 </p>
               </div>
             </section>

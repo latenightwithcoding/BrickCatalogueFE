@@ -56,7 +56,7 @@ export interface ProductsDetailModel {
 export interface RequestProduct {
   page: number;
   pageSize: number;
-  keywords?: string | null;
+  keyword?: string | null;
 }
 
 export const productServices = {
@@ -103,6 +103,11 @@ export const productServices = {
           ...request
         },
         withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (response.status === 200) {

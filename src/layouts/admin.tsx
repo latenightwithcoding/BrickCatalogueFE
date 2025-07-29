@@ -44,14 +44,14 @@ export default function AdminLayout({
   }, []);
 
   return (
-    <div className="relative flex flex-col min-h-screen overflow-x-hidden">
+    <div data-lenis className="min-h-screen flex flex-col overflow-x-hidden">
       {" "}
       {/* <-- dùng min-h-screen */}
       <AdminNavbar
         isCollapsed={isSidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
       />
-      <div className="flex flex-row flex-1">
+      <div className="flex flex-row flex-1 mt-10">
         {" "}
         {/* <-- bỏ h-screen ở đây */}
         <div className="fixed top-16 left-0 z-0">

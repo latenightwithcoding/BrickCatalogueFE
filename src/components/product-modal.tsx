@@ -18,6 +18,7 @@ import { Category, categoryServices, subCategory } from "@/services/category";
 import "react-quill/dist/quill.snow.css";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import CustomSelect from "./custom-select";
 
 // const categories = [
 //     { key: "clothes", label: "Quần áo" },
@@ -74,6 +75,7 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
     const [selectedFinalCategory, setSelectedFinalCategory] = useState < Set < string >> (new Set([]));
     const [errors, setErrors] = useState < Record < string, string>> ({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [reload, setReload] = useState(false);
 
     function removeVietnameseTones(str: string): string {
         return str
@@ -149,7 +151,14 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
 
             try {
                 const response = await productServices.createProduct(data);
-                console.log("Product created successfully:", response);
+                if (response) {
+                    addToast({
+                        title: "Thành công",
+                        description: "Sản phẩm đã được tạo thành công",
+                        color: "success",
+                    });
+                    closeModal();
+                }
             } catch (error) {
                 console.error("Error creating product:", error);
             }
@@ -386,10 +395,9 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                     {formik.errors.size}
                                 </p>
                             ) : null}
-                            <Select
+                            {/* <Select
                                 className="w-full mb-4"
                                 label="Đơn vị kích thước"
-                                placeholder="Chọn đơn vị kích thước"
                                 selectedKeys={new Set([formik.values.sizeUnit])} // ✅ luôn có 1 giá trị mặc định
                                 onSelectionChange={(keys) => {
                                     const stringKeys = Array.from(keys as Set<unknown>).map(String);
@@ -399,7 +407,21 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                 <SelectItem key="cm">cm</SelectItem>
                                 <SelectItem key="m">m</SelectItem>
                                 <SelectItem key="mm">mm</SelectItem>
-                            </Select>
+                            </Select> */}
+                            <CustomSelect
+                                label="Đơn vị kích thước"
+                                options={[
+                                    { id: "cm", name: "cm" },
+                                    { id: "m", name: "m" },
+                                    { id: "mm", name: "mm" },
+                                ]}
+                                placeholder="Chọn đơn vị kích thước"
+                                selectedKeys={new Set([formik.values.sizeUnit])}
+                                onSelectionChange={(keys) => {
+                                    const stringKeys = Array.from(keys as Set<unknown>).map(String);
+                                    formik.setFieldValue("sizeUnit", stringKeys[0]);
+                                }}
+                            />
                             {formik.touched.sizeUnit &&
                                 typeof formik.errors.sizeUnit === "string" ? (
                                 <p className="text-red-500 text-sm">
@@ -431,23 +453,30 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                             {errors.description && (
                                 <span className="text-red-400">{errors.description}</span>
                             )}
-                            <Select
-                                className="w-full mb-4"
+                            {/* <Select
+                                className="w-full mb-4 min-h-12 [&_[data-slot='trigger']]:py-2 [&_[data-slot='label']]:truncate"
                                 label="Danh mục sản phẩm"
-                                placeholder="Chọn danh mục"
                                 selectedKeys={selectedCategory}
                                 onSelectionChange={(keys) => {
-                                    const stringKeys = Array.from(keys as Set<unknown>).map(
-                                        String,
-                                    );
-
+                                    const stringKeys = Array.from(keys as Set<unknown>).map(String);
                                     setSelectedCategory(new Set(stringKeys));
                                 }}
                             >
                                 {category.map((category) => (
                                     <SelectItem key={category.id}>{category.name}</SelectItem>
                                 ))}
-                            </Select>
+                            </Select> */}
+
+                            <CustomSelect
+                                label="Danh mục sản phẩm"
+                                placeholder="Chọn danh mục sản phẩm"
+                                options={category}
+                                selectedKeys={selectedCategory}
+                                onSelectionChange={(keys) => {
+                                    const stringKeys = Array.from(keys).map(String);
+                                    setSelectedCategory(new Set(stringKeys));
+                                }}
+                            />
                             {selectedCategory.size > 0 &&
                                 (() => {
                                     const selectedCat = category.find(
@@ -460,26 +489,18 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                         selectedCat.child.length > 0
                                     );
                                 })() && (
-                                    <Select
-                                        className="w-full mb-4"
+                                    <CustomSelect
                                         label="Danh mục con"
-                                        placeholder="Chọn danh mục con"
+                                        placeholder="Chọn danh mục con của sản phẩm"
+                                        options={category
+                                            .filter((cat) => selectedCategory.has(cat.id))
+                                            .flatMap((cat) => cat.child)}
                                         selectedKeys={selectedFinalCategory}
                                         onSelectionChange={(keys) => {
-                                            const stringKeys = Array.from(keys as Set<unknown>).map(
-                                                String,
-                                            );
-
-                                            setSelectedFinalCategory(new Set(stringKeys)); // Cập nhật subCategory theo keys
+                                            const stringKeys = Array.from(keys as Set<unknown>).map(String);
+                                            setSelectedFinalCategory(new Set(stringKeys));
                                         }}
-                                    >
-                                        {category
-                                            .filter((cat) => selectedCategory.has(cat.id))
-                                            .flatMap((cat) => cat.child)
-                                            .map((sub) => (
-                                                <SelectItem key={sub.id}>{sub.name}</SelectItem>
-                                            ))}
-                                    </Select>
+                                    />
                                 )}
                         </ModalBody>
                         <ModalFooter className="flex flex-row items-center">

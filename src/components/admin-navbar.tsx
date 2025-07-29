@@ -22,7 +22,7 @@ import { DropdownIcon, LogoutIcon, UserIcon } from "./icons";
 import { authService } from "@/services/auth";
 
 // Tạo wrapper component để lọc prop không mong muốn
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = forwardRef < HTMLButtonElement, ButtonProps> (
   ({ preventFocusOnPress, ...props }, ref) => (
     <OriginalButton {...props} ref={ref} />
   ),
@@ -49,14 +49,16 @@ export const AdminNavbar = ({
 
   async function Logout() {
     try {
-      await authService.logout();
+      // await authService.logout();
+      localStorage.removeItem("token");
+      localStorage.removeItem("name");
       addToast({
         title: "Đăng xuất thành công",
         description: "Bạn đã đăng xuất khỏi hệ thống.",
         color: "success",
       });
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/admin/login";
       }, 2500);
     } catch (error) {
       console.error("Logout failed:", error);
@@ -64,7 +66,7 @@ export const AdminNavbar = ({
   }
 
   return (
-    <HeroUINavbar className="z-30 shadow-md" maxWidth="full" position="sticky">
+    <HeroUINavbar className="z-30 shadow-md" maxWidth="full" style={{ position: "fixed", top: 0, left: 0, right: 0 }}>
       {/* Bên trái: menu + logo */}
       <NavbarContent className="pl-0" justify="start">
         <Button
