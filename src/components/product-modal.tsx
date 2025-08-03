@@ -285,7 +285,7 @@ export const ProductModal = ({ isOpen, onOpenChange }: ProductModalProps) => {
                                                 </button>
                                             </div>
                                         ))}
-                                    {productImage && productImage.length < 9 && (
+                                    {productImage && productImage.length < 5 && (
                                         <div className="w-24 h-24 relative border border-dashed border-gray-300 rounded flex items-center justify-center hover:border-primary">
                                             <Upload
                                                 className="text-gray-400 pointer-events-none"

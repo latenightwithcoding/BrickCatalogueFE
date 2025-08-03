@@ -1,5 +1,7 @@
 import { create } from "domain";
 import api from "../api/axios-config";
+import { authService } from "./auth";
+import { useNavigate } from "react-router-dom";
 
 export interface ProductCardModel {
   id: string;
@@ -30,6 +32,24 @@ export interface ProductDetailModel {
   };
   images: string[];
   relatedProducts: Products[];
+}
+
+export interface ProductAdminDetailModel {
+  id: string;
+  name: string;
+  description: string;
+  sku: string;
+  size: string;
+  sizeUnit: string;
+  category: {
+    id: string;
+    name: string;
+    parent: {
+      id: string;
+      name: string;
+    }
+  };
+  images: string[];
 }
 
 export interface ResponseProduct {
@@ -88,11 +108,20 @@ export const productServices = {
         console.log("Product data:", response.data.data);
 
         return response.data.data;
-      } else {
-        return null;
       }
     } catch (error) {
-      console.error("Error fetching product by ID:", error);
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "status" in (error as any).response &&
+        (error as any).response.status === 404
+      ) {
+        console.error("Product not found, redirecting to home page");
+        window.location.href = "/*";
+      }
       throw error;
     }
   },
@@ -110,15 +139,44 @@ export const productServices = {
         },
       });
 
+      console.log("Response status:", response.status);
+
       if (response.status === 200) {
         console.log("Product data for admin:", response.data.data);
+
+        return response.data.data;
+      } {
+        return null;
+      }
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "response" in error && (error as any).response.status === 401) {
+        console.error("Unauthorized access - redirecting to login");
+        authService.logout();
+      }
+      console.error("Error fetching product for admin by ID:", error);
+      throw error;
+    }
+  },
+  getProductForAdmin: async (id: string): Promise<ProductAdminDetailModel | null> => {
+    try {
+      const response = await api.get(`/product/admin/${id}`, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 200) {
+        console.log("Product data:", response.data.data);
 
         return response.data.data;
       } else {
         return null;
       }
     } catch (error) {
-      console.error("Error fetching product for admin by ID:", error);
+      console.error("Error fetching product by ID:", error);
       throw error;
     }
   },
@@ -127,7 +185,7 @@ export const productServices = {
       const response = await api.post(`/product`, product, {
         withCredentials: true,
         headers: {
-          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -142,5 +200,48 @@ export const productServices = {
       console.error("Error creating product:", error);
       throw error;
     }
-  }
+  },
+  updateProduct: async (id: string, product: FormData): Promise<ProductDetailModel | null> => {
+    try {
+      const response = await api.put(`/product/${id}`, product, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        console.log("Product updated successfully:", response.data.data);
+
+        return response.data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      throw error;
+    }
+  },
+  deleteProduct: async (id: string): Promise<boolean> => {
+    try {
+      const response = await api.delete(`/product/${id}`, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 200 || response.status === 204) {
+        console.log("Product deleted successfully");
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  },
 };

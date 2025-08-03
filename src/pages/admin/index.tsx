@@ -1,7 +1,6 @@
 import { Button } from "@heroui/button";
 import {
   addToast,
-  Input,
   Pagination,
   Spinner,
   Table,
@@ -14,6 +13,7 @@ import {
   Select,
   SelectItem,
 } from "@heroui/react";
+import { Input } from "@heroui/input";
 import { Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactQuill from "react-quill";
@@ -23,6 +23,8 @@ import { productServices, RequestProduct } from "@/services/product";
 import { Category, categoryServices, subCategory } from "@/services/category";
 import { authService } from "@/services/auth";
 import AdminLayout from "@/layouts/admin";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import {
   GeneralData,
   ProductAttribute,
@@ -33,9 +35,12 @@ import {
 import { ProductDetailModel } from "@/services/product";
 import { ProductsDetailModel } from "@/services/product";
 import { useSearchParams } from "react-router-dom";
+import CustomSelect from "@/components/custom-select";
+import ConfirmModal from "@/components/confirm-modal";
 
 export default function AdminIndexPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen: isOpenConfirm, onOpen: onOpenConfirm, onOpenChange: onOpenChangeConfirm } = useDisclosure();
   const [searchParams, setSearchParams] = useSearchParams();
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
@@ -48,40 +53,58 @@ export default function AdminIndexPage() {
   });
   const inputRef = useRef < HTMLInputElement > (null);
   const [showHint, setShowHint] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState < string | null > (null);
+
+  const fetchShopData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await productServices.getProductsForAdmin({
+        ...request,
+        page: page,
+      });
+
+      const newParams: Record<string, string> = { page: String(page) };
+      if (request.keyword) {
+        newParams.keyword = request.keyword;
+      }
+      setSearchParams(newParams);
+
+      if (response) {
+        setProducts(response);
+      } else {
+        addToast({
+          title: "Không tìm thấy sản phẩm",
+          description: "Cửa hàng này chưa có sản phẩm nào.",
+          color: "warning",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching shop data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchShopData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await productServices.getProductsForAdmin({
-          ...request,
-          page: page,
-        });
-
-        const newParams: Record<string, string> = { page: String(page) };
-        if (request.keyword) {
-          newParams.keyword = request.keyword;
-        }
-        setSearchParams(newParams);
-
-        if (response) {
-          setProducts(response);
-        } else {
-          addToast({
-            title: "Không tìm thấy sản phẩm",
-            description: "Cửa hàng này chưa có sản phẩm nào.",
-            color: "warning",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching shop data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
     fetchShopData();
   }, [page, request.keyword, isOpen]);
+
+  const deleteProduct = async (productId: string) => {
+    try {
+      const response = await productServices.deleteProduct(productId);
+      if (response) {
+        addToast({
+          title: "Thành công",
+          description: "Sản phẩm đã được xóa thành công",
+          color: "success",
+        });
+        fetchShopData();
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  }
 
   return (
     <AdminLayout>
@@ -89,6 +112,21 @@ export default function AdminIndexPage() {
         <div className="flex items-center justify-between mt-4">
           <h1 className={"text-2xl font-semibold"}>Quản lý sản phẩm</h1>
           <ProductModal isOpen={isOpen} onOpenChange={onOpenChange} />
+          <ConfirmModal
+            isOpen={isOpenConfirm}
+            title="Xác nhận xóa sản phẩm"
+            message="Bạn có chắc chắn muốn xóa sản phẩm này?"
+            onClose={() => {
+              setSelectedProductId(null);
+              onOpenChangeConfirm();
+            }}
+            onConfirm={() => {
+              if (selectedProductId) {
+                deleteProduct(selectedProductId);
+              }
+              onOpenChangeConfirm();
+            }}
+          />
           <div className="flex flex-row items-center gap-4">
             <Input
               className="w-96 "
@@ -180,16 +218,26 @@ export default function AdminIndexPage() {
                     <TableCell className="text-left">
                       {product.size} {product.sizeUnit}
                     </TableCell>
-                    <TableCell className="text-left">
+                    <TableCell className="flex justify-start text-left gap-4">
                       <Button
                         color="primary"
                         variant="flat"
                         onPress={() => {
                           // Handle edit product logic here
-                          window.location.href = `/admin/shop/products/${product.id}/edit`;
+                          window.location.href = `/admin/product/${product.id}/edit`;
                         }}
                       >
                         Sửa
+                      </Button>
+                      <Button
+                        color="danger"
+                        variant="flat"
+                        onPress={() => {
+                          setSelectedProductId(product.id);
+                          onOpenChangeConfirm();
+                        }}
+                      >
+                        Xóa
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -214,9 +262,6 @@ export function AdminEditProductPage() {
   const [selectedCategory, setSelectedCategory] = useState < Set < string >> (
     new Set([]),
   );
-  const [productName, setProductName] = useState("");
-  const [productDescription, setProductDescription] = useState("");
-  const [toggleAttributeForm, setToggleAttributeForm] = useState(false);
   const [productImage, setProductImage] = useState < File[] > ([]);
   const [previewIndex, setPreviewIndex] = useState < number | null > (null);
   const [category, setCategory] = useState < Category[] > ([]);
@@ -226,25 +271,71 @@ export function AdminEditProductPage() {
   > (new Set([]));
   const [errors, setErrors] = useState < Record < string, string>> ({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [generalData, setGeneralData] = useState < GeneralData > ({
-    price: "",
-    stock: "",
-    sku: "",
-  });
-  const [enableClassification, setEnableClassification] = useState(false);
 
-  const [attributes, setAttributes] = useState < ProductAttribute[] > ([
-    // {
-    //     id: '1',
-    //     name: 'Màu',
-    //     options: [{ id: '1-1', value: 'Đỏ' }, { id: '1-2', value: 'Xanh' }, { id: '1-3', value: 'Xanh lá' }]
-    // },
-    // {
-    //     id: '2',
-    //     name: 'Size',
-    //     options: [{ id: '1-1', value: 'M', }, { id: '1-2', value: 'L' }, { id: '1-3', value: 'XL' }]
-    // }
-  ]);
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Tên sản phẩm là bắt buộc"),
+    sku: Yup.string().required("Mã sản phẩm là bắt buộc"),
+    description: Yup.string().required("Mô tả sản phẩm là bắt buộc"),
+    size: Yup.string().required("Kích thước sản phẩm là bắt buộc"),
+    sizeUnit: Yup.string().required("Đơn vị kích thước là bắt buộc"),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      sku: "",
+      description: "",
+      size: "",
+      sizeUnit: "cm", // ✅ đặt mặc định là "cm"
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      if (productImage.length === 0) {
+        setErrors((prev) => ({
+          ...prev,
+          images: "Ít nhất một ảnh sản phẩm là bắt buộc",
+        }));
+        addToast({
+          title: "Lỗi",
+          description: "Ít nhất một ảnh sản phẩm là bắt buộc",
+          color: "danger",
+        });
+        return;
+      }
+      const data = new FormData();
+      data.append("name", values.name);
+      data.append("sku", values.sku);
+      data.append("description", values.description);
+      data.append("size", values.size);
+      data.append("sizeUnit", values.sizeUnit);
+      data.append("categoryId", Array.from(selectedFinalCategory)[0] || Array.from(selectedCategory)[0] || "");
+      // productImage.forEach((file) => {
+      //   data.append("images", file);
+      // });
+      for (const item of productImage) {
+        if (typeof item === "string") {
+          const fileName = item.split("/").pop() ?? "image.jpg";
+          const file = await urlToFile(item, fileName, "image/jpeg"); // hoặc đoán type từ đuôi file
+          data.append("images", file);
+        } else {
+          data.append("images", item); // File object
+        }
+      }
+
+      try {
+        const response = await productServices.updateProduct(id, data);
+        if (response) {
+          addToast({
+            title: "Thành công",
+            description: "Sản phẩm đã được cập nhật thành công",
+            color: "success",
+          });
+        }
+      } catch (error) {
+        console.error("Error creating product:", error);
+      }
+    },
+  });
 
   function removeVietnameseTones(str: string): string {
     return str
@@ -276,74 +367,7 @@ export function AdminEditProductPage() {
     }
   };
 
-  // Dữ liệu bảng phân loại
-  const [variantData, setVariantData] = useState < VariantData[] > ([
-    // SE group
-    // { parentName: "Đỏ", parentImage: null, childName: "M", price: "", stock: "", sku: "" },
-    // { parentName: "Đỏ", parentImage: null, childName: "L", price: "", stock: "", sku: "" },
-    // { parentName: "Đỏ", parentImage: null, childName: "XL", price: "", stock: "", sku: "" },
-    // // SE plus group
-    // { parentName: "Xanh", parentImage: null, childName: "M", price: "", stock: "", sku: "" },
-    // { parentName: "Xanh", parentImage: null, childName: "L", price: "", stock: "", sku: "" },
-    // { parentName: "Xanh", parentImage: null, childName: "XL", price: "", stock: "", sku: "" },
-    // // Pro group
-    // { parentName: "Xanh lá", parentImage: null, childName: "M", price: "", stock: "", sku: "" },
-    // { parentName: "Xanh lá", parentImage: null, childName: "L", price: "", stock: "", sku: "" },
-    // { parentName: "Xanh lá", parentImage: null, childName: "XL", price: "", stock: "", sku: "" },
-  ]);
-
-  // Group data theo parent
-  const getGroupedData = (): { [key: string]: VariantData[] } => {
-    const groups: { [key: string]: VariantData[] } = {};
-
-    variantData.forEach((item) => {
-      if (!groups[item.parentName]) {
-        groups[item.parentName] = [];
-      }
-      groups[item.parentName].push(item);
-    });
-
-    // console.log(groups);
-    return groups;
-  };
-
   // Update variant data
-  const updateVariantData = (
-    parentName: string,
-    childName: string,
-    field: keyof VariantData,
-    value: string,
-  ) => {
-    setVariantData((prev) =>
-      prev.map((item) =>
-        item.parentName === parentName && item.childName === childName
-          ? { ...item, [field]: value }
-          : item,
-      ),
-    );
-  };
-
-  // Handle image upload
-  const handleImageUpload = (parentName: string, file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-
-    setVariantData((prev) =>
-      prev.map((item) =>
-        item.parentName === parentName
-          ? { ...item, parentImage: imageUrl }
-          : item,
-      ),
-    );
-  };
-
-  // Remove image
-  const removeImage = (parentName: string) => {
-    setVariantData((prev) =>
-      prev.map((item) =>
-        item.parentName === parentName ? { ...item, parentImage: null } : item,
-      ),
-    );
-  };
 
   async function urlToFile(
     url: string,
@@ -356,99 +380,17 @@ export function AdminEditProductPage() {
     return new File([blob], fileName, { type: mimeType });
   }
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    const formData = new FormData();
-    const finalData = handleSubmitData({
-      name: productName,
-      description: productDescription,
-      categoryId:
-        Array.from(selectedFinalCategory)[0] || Array.from(selectedCategory)[0],
-      attributes: attributes,
-      variants: variantData,
-    });
-
-    formData.append("Product", JSON.stringify(finalData));
-
-    // Chuẩn hóa productImage: nếu là URL thì convert về File
-    for (const item of productImage) {
-      if (typeof item === "string") {
-        const fileName = item.split("/").pop() ?? "image.jpg";
-        const file = await urlToFile(item, fileName, "image/jpeg"); // hoặc đoán type từ đuôi file
-
-        formData.append("ProductImage", file);
-      } else {
-        formData.append("ProductImage", item); // File object
-      }
-    }
-
-    // Attribute Images
-    for (let i = 0; i < variantData.length; i++) {
-      const image = variantData[i].parentImage;
-
-      if (image) {
-        if (typeof image === "string") {
-          const fileName = image.split("/").pop() ?? "attr.jpg";
-          const file = await urlToFile(image, fileName, "image/jpeg");
-
-          formData.append("AttributeImage", file);
-        } else {
-          formData.append("AttributeImage", image);
-        }
-      }
-    }
-
-    try {
-      const response = await productServices.updateProduct(formData, id);
-
-      if (response && response.statusCodes === 200) {
-        addToast({
-          title: "Thông báo",
-          description: "Cập nhật sản phẩm thành công!",
-          color: "success",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating product:", error);
-      addToast({
-        title: "Thông báo",
-        description: "Cập nhật sản phẩm thất bại, vui lòng thử lại sau.",
-        color: "danger",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // xử lý upload ảnh sản phẩm tối đa là 9 tấm
+  // xử lý upload ảnh sản phẩm tối đa là 5 tấm
   const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
 
     if (files && files.length > 0) {
       const newFiles = Array.from(files).slice(
         0,
-        9 - (productImage?.length || 0),
+        5 - (productImage?.length || 0),
       );
 
       setProductImage((prev) => (prev ? [...prev, ...newFiles] : newFiles));
-    }
-  };
-
-  const handleEditorChange = (value: string) => {
-    setProductDescription(value);
-
-    // Clear error if there's content
-    if (errors.description && value && value.trim() !== "<p><br></p>") {
-      const { description, ...rest } = errors;
-
-      setErrors(rest);
-    }
-
-    if (value.trim() === "" || value.trim() === "<p><br></p>") {
-      setErrors({
-        ...errors,
-        description: "Mô tả là bắt buộc",
-      });
     }
   };
 
@@ -466,102 +408,34 @@ export function AdminEditProductPage() {
     };
 
     const fetchData = async () => {
-      const slug = localStorage.getItem("userPath");
-
-      if (!slug) {
-        const logout = async () => {
-          await authService.logout();
-        };
-
-        logout();
-
-        return;
-      }
       if (id) {
         try {
-          const response = await productServices.getProduct(id, slug);
-
+          const response = await productServices.getProductForAdmin(id);
           if (response) {
-            const product = response;
 
-            // Tên, mô tả, ảnh
-            setProductName(product.name);
-            setProductDescription(product.description);
-            setProductImage(product.productImages || []);
+            formik.setValues({
+              name: response.name,
+              sku: response.sku,
+              description: response.description,
+              size: response.size,
+              sizeUnit: response.sizeUnit
+            });
 
-            // Danh mục
-            setSelectedCategory(new Set([product.category?.id]));
-            setSelectedFinalCategory(
-              new Set([
-                product.category?.subCategories?.[0]?.id ||
-                product.category?.id,
-              ]),
+            setProductImage(
+              response.images
+                ? response.images.map((img: any) =>
+                  typeof img === "string" ? img : img.url,
+                )
+                : [],
             );
-
-            // Thuộc tính
-            if (product.attribute && product.attribute.length > 0) {
-              setEnableClassification(true);
-
-              setAttributes(
-                product.attribute.map((attr, index) => ({
-                  id: `attr-${index}`, // gán id giả nếu không có id
-                  name: attr.name,
-                  options: attr.options.map((opt, idx) => ({
-                    id: opt.id,
-                    value: opt.value,
-                    image: opt.image || null,
-                  })),
-                })),
-              );
-
-              // Biến thể
-              const parentAttr = product.attribute.find(
-                (attr) => attr.isParent,
-              );
-              const childAttr = product.attribute.find(
-                (attr) => !attr.isParent,
-              );
-
-              const parentOptionOrder =
-                parentAttr?.options.map((opt) => opt.id) || [];
-
-              const sortedVariantData = product.variant
-                .map((variant) => {
-                  const [parentId, childId] = variant.attributeIndex;
-
-                  const parentOpt = parentAttr?.options.find(
-                    (opt) => opt.id === parentId,
-                  );
-                  const childOpt = childAttr?.options.find(
-                    (opt) => opt.id === childId,
-                  );
-
-                  return {
-                    parentId,
-                    parentName: parentOpt?.value || "",
-                    parentImage: parentOpt?.image || "",
-                    childName: childOpt?.value || "",
-                    price: variant.price.toString(),
-                    stock: variant.stock.toString(),
-                    sku: variant.sku,
-                  };
-                })
-                .sort((a, b) => {
-                  const indexA = parentOptionOrder.indexOf(a.parentId);
-                  const indexB = parentOptionOrder.indexOf(b.parentId);
-
-                  return indexA - indexB;
-                });
-
-              setVariantData(sortedVariantData);
-            } else if (product.variant && product.variant.length > 0) {
-              setGeneralData({
-                price: product.variant[0].price.toString(),
-                stock: product.variant[0].stock.toString(),
-                sku: product.variant[0].sku,
-              });
+            if (response.category.parent) {
+              setSelectedCategory(new Set([response.category.parent.id]));
+              setSelectedFinalCategory(new Set([response.category.id]));
+            } else {
+              setSelectedCategory(new Set([response.category.id]));
             }
           }
+
         } catch (error) {
           console.error("Error fetching product data:", error);
         }
@@ -602,7 +476,7 @@ export function AdminEditProductPage() {
             className="mb-4 w-fit"
             color="primary"
             variant="flat"
-            onPress={() => (window.location.href = "/admin/shop/")}
+            onPress={() => (window.location.href = "/admin")}
           >
             Quay lại
           </Button>
@@ -613,7 +487,7 @@ export function AdminEditProductPage() {
               htmlFor="product-image-upload"
             >
               <span className="text-red-500">*</span> Ảnh sản phẩm{" "}
-              <span className="font-normal">({productImage?.length}/9)</span>
+              <span className="font-normal">({productImage?.length}/5)</span>
             </label>
             <div className="flex items-center gap-4">
               {productImage &&
@@ -635,11 +509,7 @@ export function AdminEditProductPage() {
                       <img
                         alt={`Product ${index + 1}`}
                         className="w-24 h-24 object-cover rounded"
-                        src={
-                          typeof file === "string"
-                            ? file
-                            : URL.createObjectURL(file)
-                        }
+                        src={typeof file === "string" ? file : URL.createObjectURL(file)}
                       />
                     </button>
                     <button
@@ -647,7 +517,8 @@ export function AdminEditProductPage() {
                       type="button"
                       onClick={() =>
                         setProductImage(
-                          (prev) => prev?.filter((_, i) => i !== index) || null,
+                          (prev) =>
+                            prev?.filter((_, i) => i !== index) || null,
                         )
                       }
                     >
@@ -655,7 +526,7 @@ export function AdminEditProductPage() {
                     </button>
                   </div>
                 ))}
-              {productImage && productImage.length < 9 && (
+              {productImage && productImage.length < 5 && (
                 <div className="w-24 h-24 relative border border-dashed border-gray-300 rounded flex items-center justify-center hover:border-primary">
                   <Upload
                     className="text-gray-400 pointer-events-none"
@@ -709,13 +580,9 @@ export function AdminEditProductPage() {
 
               {/* Ảnh lớn */}
               <img
+                src={typeof productImage[previewIndex] === "string" ? productImage[previewIndex] : URL.createObjectURL(file)}
                 alt={`Preview ${previewIndex + 1}`}
                 className="max-w-4xl max-h-[90vh] object-contain rounded shadow-lg"
-                src={
-                  typeof productImage[previewIndex] === "string"
-                    ? productImage[previewIndex]
-                    : URL.createObjectURL(file)
-                }
               />
 
               {/* Phải */}
@@ -734,9 +601,61 @@ export function AdminEditProductPage() {
             label="Tên sản phẩm"
             placeholder="Nhập tên sản phẩm"
             type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
+            value={formik.values.name}
+            onChange={formik.handleChange("name")}
           />
+          {formik.touched.name &&
+            typeof formik.errors.name === "string" ? (
+            <p className="text-red-500 text-sm">{formik.errors.name}</p>
+          ) : null}
+          <Input
+            required
+            className="mb-4"
+            label="Mã sản phẩm"
+            placeholder="Nhập mã sản phẩm"
+            type="text"
+            value={formik.values.sku}
+            onChange={formik.handleChange("sku")}
+          />
+          {formik.touched.sku &&
+            typeof formik.errors.sku === "string" ? (
+            <p className="text-red-500 text-sm">{formik.errors.sku}</p>
+          ) : null}
+          <Input
+            required
+            className="mb-4"
+            label="Kích thước sản phẩm"
+            placeholder="Nhập kích thước sản phẩm"
+            type="text"
+            value={formik.values.size}
+            onChange={formik.handleChange("size")}
+          />
+          {formik.touched.size &&
+            typeof formik.errors.size === "string" ? (
+            <p className="text-red-500 text-sm">
+              {formik.errors.size}
+            </p>
+          ) : null}
+          <CustomSelect
+            label="Đơn vị kích thước"
+            options={[
+              { id: "cm", name: "cm" },
+              { id: "m", name: "m" },
+              { id: "mm", name: "mm" },
+            ]}
+            placeholder="Chọn đơn vị kích thước"
+            selectedKeys={new Set([formik.values.sizeUnit])}
+            onSelectionChange={(keys) => {
+              const stringKeys = Array.from(keys as Set<unknown>).map(String);
+              formik.setFieldValue("sizeUnit", stringKeys[0]);
+            }}
+          />
+          {formik.touched.sizeUnit &&
+            typeof formik.errors.sizeUnit === "string" ? (
+            <p className="text-red-500 text-sm">
+              {formik.errors.sizeUnit}
+            </p>
+          ) : null}
           {/* <Textarea
                                 label="Mô tả sản phẩm"
                                 placeholder="Nhập mô tả sản phẩm"
@@ -752,31 +671,41 @@ export function AdminEditProductPage() {
                                 style={{ overflow: 'hidden' }}
                             > */}
           <ReactQuill
-            className="min-h-36 h-36 mb-14"
+            className="min-h-36 h-36 mb-12"
             readOnly={isSubmitting}
             theme="snow"
-            value={productDescription}
-            onChange={handleEditorChange}
+            value={formik.values.description}
+            defaultValue={formik.values.description}
+            onChange={(value) => formik.setFieldValue("description", value)}
           />
           {/* </div> */}
           {errors.description && (
             <span className="text-red-400">{errors.description}</span>
           )}
-          <Select
-            className="w-full mb-4"
+          {/* <Select
+                                className="w-full mb-4 min-h-12 [&_[data-slot='trigger']]:py-2 [&_[data-slot='label']]:truncate"
+                                label="Danh mục sản phẩm"
+                                selectedKeys={selectedCategory}
+                                onSelectionChange={(keys) => {
+                                    const stringKeys = Array.from(keys as Set<unknown>).map(String);
+                                    setSelectedCategory(new Set(stringKeys));
+                                }}
+                            >
+                                {category.map((category) => (
+                                    <SelectItem key={category.id}>{category.name}</SelectItem>
+                                ))}
+                            </Select> */}
+
+          <CustomSelect
             label="Danh mục sản phẩm"
-            placeholder="Chọn danh mục"
+            placeholder="Chọn danh mục sản phẩm"
+            options={category}
             selectedKeys={selectedCategory}
             onSelectionChange={(keys) => {
-              const stringKeys = Array.from(keys as Set<unknown>).map(String);
-
+              const stringKeys = Array.from(keys).map(String);
               setSelectedCategory(new Set(stringKeys));
             }}
-          >
-            {category.map((category) => (
-              <SelectItem key={category.id}>{category.name}</SelectItem>
-            ))}
-          </Select>
+          />
           {selectedCategory.size > 0 &&
             (() => {
               const selectedCat = category.find(
@@ -785,47 +714,29 @@ export function AdminEditProductPage() {
 
               return (
                 selectedCat &&
-                selectedCat.subCategories &&
-                selectedCat.subCategories.length > 0
+                selectedCat.child &&
+                selectedCat.child.length > 0
               );
             })() && (
-              <Select
-                className="w-full mb-4"
+              <CustomSelect
                 label="Danh mục con"
-                placeholder="Chọn danh mục con"
+                placeholder="Chọn danh mục con của sản phẩm"
+                options={category
+                  .filter((cat) => selectedCategory.has(cat.id))
+                  .flatMap((cat) => cat.child)}
                 selectedKeys={selectedFinalCategory}
                 onSelectionChange={(keys) => {
-                  const stringKeys = Array.from(keys as Set<unknown>).map(
-                    String,
-                  );
-
-                  setSelectedFinalCategory(new Set(stringKeys)); // Cập nhật subCategory theo keys
+                  const stringKeys = Array.from(keys as Set<unknown>).map(String);
+                  setSelectedFinalCategory(new Set(stringKeys));
                 }}
-              >
-                {category
-                  .filter((cat) => selectedCategory.has(cat.id))
-                  .flatMap((cat) => cat.subCategories)
-                  .map((sub) => (
-                    <SelectItem key={sub.id}>{sub.name}</SelectItem>
-                  ))}
-              </Select>
+              />
             )}
-          <DynamicCategoryForm
-            attributes={attributes}
-            enableClassification={enableClassification}
-            generalData={generalData}
-            setAttributes={setAttributes}
-            setEnableClassification={setEnableClassification}
-            setGeneralData={setGeneralData}
-            setVariantData={setVariantData}
-            variantData={variantData}
-          />
           <Button
             className="mt-4"
             color="primary"
             isDisabled={isSubmitting}
             isLoading={isSubmitting}
-            onPress={handleSubmit}
+            onPress={formik.handleSubmit}
           >
             {isSubmitting ? "Đang lưu..." : "Lưu sản phẩm"}
           </Button>

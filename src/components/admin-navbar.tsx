@@ -43,7 +43,7 @@ export const AdminNavbar = ({
   useEffect(() => {
     // Kiểm tra xem người dùng đã đăng nhập hay chưa
     if (!localStorage.getItem("token")) {
-      window.location.href = "/login";
+      window.location.href = "/admin/login";
     }
   }, [localStorage.getItem("token")]);
 

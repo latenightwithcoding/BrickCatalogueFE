@@ -19,10 +19,10 @@ export const Navbar = () => {
   const [category, setCategory] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [showSub, setShowSub] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef < NodeJS.Timeout | null > (null);
   const [subLeft, setSubLeft] = useState(0);
   const [subWidth, setSubWidth] = useState(0);
-  const [anchorRef, setAnchorRef] = useState<HTMLElement | null>(null);
+  const [anchorRef, setAnchorRef] = useState < HTMLElement | null > (null);
   const [isStatic, setIsStatic] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -180,11 +180,11 @@ export const Navbar = () => {
   const flexGrow = useTransform(progress, [0, 1], [0, 1]);
   const subNavbarTop = useTransform([height, top], ([h, t]) => h + t);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeMobileParent, setActiveMobileParent] = useState<number | null>(
+  const [activeMobileParent, setActiveMobileParent] = useState < number | null > (
     null,
   );
-  const firstItemRef = useRef<HTMLElement | null>(null);
-  const logoRef = useRef<HTMLDivElement | null>(null);
+  const firstItemRef = useRef < HTMLElement | null > (null);
+  const logoRef = useRef < HTMLDivElement | null > (null);
 
   useEffect(() => {
     if (anchorRef) {
@@ -463,6 +463,7 @@ export const Navbar = () => {
                   <>
                     <SepNavbarItem
                       className={`${isStatic ? "text-md" : "text-lg"} font-medium px-2 py-1 hover:text-[#527aaf] text-black rounded-full hover:border-white hover:bg-white hover:shadow-lg transition`}
+                      href="/"
                       innerRef={(el) => {
                         if (el && !firstItemRef.current) {
                           firstItemRef.current = el;

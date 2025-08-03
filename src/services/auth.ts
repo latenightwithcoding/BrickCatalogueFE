@@ -1,3 +1,4 @@
+import { log } from "console";
 import api from "../api/axios-config";
 
 export interface UserLoginResponse {
@@ -41,4 +42,8 @@ export const authService = {
       throw error;
     }
   },
+  logout: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("name");
+  }
 };

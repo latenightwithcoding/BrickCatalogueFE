@@ -1,8 +1,29 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ImagePreview({ thumbnails }) {
+export default function ImagePreview({ thumbnails }: { thumbnails: string[] }) {
   const [selected, setSelected] = useState(thumbnails[0]);
+  const [previewIndex, setPreviewIndex] = useState < number | null > (null);
+
+  const handleImageClick = (index: number) => {
+    setPreviewIndex(index);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewIndex(null);
+  };
+
+  const handlePrev = () => {
+    if (previewIndex !== null && previewIndex > 0) {
+      setPreviewIndex(previewIndex - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (previewIndex !== null && previewIndex < thumbnails.length - 1) {
+      setPreviewIndex(previewIndex + 1);
+    }
+  };
 
   return (
     <div className="flex flex-col-reverse md:flex-row items-center gap-6 p-4 w-full max-w-4xl mx-auto">
@@ -16,13 +37,12 @@ export default function ImagePreview({ thumbnails }) {
               onClick={() => setSelected(img)}
             >
               <img
-                alt={`Gach ${i + 1}`}
+                alt={`Thumbnail ${i + 1}`}
                 className="w-full h-full object-cover rounded-lg"
                 src={img}
               />
             </motion.button>
 
-            {/* Border animation using framer-motion */}
             <AnimatePresence>
               {selected === img && (
                 <motion.div
@@ -32,7 +52,6 @@ export default function ImagePreview({ thumbnails }) {
                   initial={{ opacity: 0 }}
                   layoutId="border"
                   transition={{ duration: 0.3 }}
-                  whileHover={{ opacity: 1 }} // làm sao để hover ảnh thì xuất hiện viền
                 />
               )}
             </AnimatePresence>
@@ -43,17 +62,63 @@ export default function ImagePreview({ thumbnails }) {
       {/* Main image */}
       <div className="flex-1 flex justify-center items-center bg-white rounded-lg p-6 w-full max-w-5xl mx-auto">
         <AnimatePresence mode="wait">
-          <motion.img
-            key={selected} // đảm bảo motion hoạt động khi src thay đổi
-            alt="Gach lớn"
-            animate={{ opacity: 1, x: 0 }}
-            className="w-full max-w-[500px] aspect-square object-cover rounded-md"
-            exit={{ opacity: 0, x: -10 }}
-            initial={{ opacity: 0, x: 10 }}
-            src={selected}
-            transition={{ duration: 0.3 }}
-          />
+          <motion.button
+            key={selected}
+            className="p-0 border-none bg-transparent"
+            type="button"
+            onClick={() => handleImageClick(thumbnails.indexOf(selected))}
+            style={{ display: "block" }}
+          >
+            <motion.img
+              alt="Ảnh chính"
+              className="w-full max-w-[500px] aspect-square object-cover rounded-md"
+              src={selected}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.button>
         </AnimatePresence>
+
+        {/* Fullscreen Preview Modal */}
+        {previewIndex !== null && (
+          <div className="fixed top-0 left-0 right-0 bottom-0 z-[9999] bg-black bg-opacity-80 flex items-center justify-center">
+            {/* Close */}
+            <button
+              className="absolute top-4 right-4 text-white text-3xl"
+              onClick={handleClosePreview}
+              title="Đóng"
+            >
+              &times;
+            </button>
+
+            {/* Prev */}
+            <button
+              className="absolute left-4 text-white text-3xl px-3 py-1 hover:bg-white/10 disabled:opacity-50"
+              disabled={previewIndex === 0}
+              onClick={handlePrev}
+            >
+              &#10094;
+            </button>
+
+            {/* Image */}
+            <img
+              alt={`Preview ${previewIndex + 1}`}
+              className="max-w-4xl max-h-[90vh] object-contain rounded shadow-lg"
+              src={thumbnails[previewIndex]}
+            />
+
+            {/* Next */}
+            <button
+              className="absolute right-4 text-white text-3xl px-3 py-1 hover:bg-white/10 disabled:opacity-50"
+              disabled={previewIndex === thumbnails.length - 1}
+              onClick={handleNext}
+            >
+              &#10095;
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

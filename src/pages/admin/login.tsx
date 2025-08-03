@@ -31,6 +31,10 @@ export default function LoginPage() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
+    let token = localStorage.getItem("token");
+    if (token) {
+      window.location.href = "/admin";
+    }
     const letterDuration = title.length * 100 + 1400;
 
     // Chữ nhích lên
@@ -188,7 +192,7 @@ export default function LoginPage() {
                 }
               />
               {formik.touched.username &&
-              typeof formik.errors.username === "string" ? (
+                typeof formik.errors.username === "string" ? (
                 <p className="text-red-500">{formik.errors.username}</p>
               ) : null}
               <Input
@@ -214,7 +218,7 @@ export default function LoginPage() {
                 }
               />
               {formik.touched.password &&
-              typeof formik.errors.password === "string" ? (
+                typeof formik.errors.password === "string" ? (
                 <p className="text-red-500">{formik.errors.password}</p>
               ) : null}
               <Button
